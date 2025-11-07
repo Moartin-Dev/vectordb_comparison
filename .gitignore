@@ -1,3 +1,7 @@
 secrets/
 
 .env
+
+app/__pycache__/
+app/__pycache__/*.pyc
+app/__pycache__/main.cpython-311.pyc
