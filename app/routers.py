@@ -4,8 +4,8 @@ from schemas import IngestRequest, QueryRequest
 from config import CHUNK_SIZE, CHUNK_OVERLAP
 from utils import extract_text_from_openapi, chunk_text, now_ms
 from embeddings import ollama_embed
-from db_pg import replace_source as pg_replace, query_topk as pg_query
-from chroma_client import upsert_source as chroma_upsert, query as chroma_query
+from db_pg import replace_source as pg_replace, query_topk as pg_query, get_stats as pg_get_stats, reset_database as pg_reset
+from chroma_client import upsert_source as chroma_upsert, query as chroma_query, get_stats as chroma_get_stats, reset_collection as chroma_reset
 
 
 router = APIRouter()
@@ -87,4 +87,28 @@ async def query(req: QueryRequest):
         "pg_results": pg_hits,
         "chroma_ms": c_ms,
         "chroma_results": chroma_hits
+    }
+
+@router.get("/stats")
+async def stats():
+    """Gibt Statistiken über beide Datenbanken zurück"""
+    pg_stats = pg_get_stats()
+    chroma_stats = chroma_get_stats()
+
+    return {
+        "pg_document_count": pg_stats["document_count"],
+        "pg_size_mb": pg_stats["size_mb"],
+        "chroma_document_count": chroma_stats["document_count"],
+        "chroma_size_mb": chroma_stats["size_mb"]
+    }
+
+@router.post("/reset")
+async def reset():
+    """Setzt beide Datenbanken zurück (löscht alle Daten)"""
+    pg_reset()
+    chroma_reset()
+
+    return {
+        "status": "success",
+        "message": "Both databases have been reset"
     }

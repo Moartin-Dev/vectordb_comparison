@@ -5,3 +5,13 @@ secrets/
 app/__pycache__/
 app/__pycache__/*.pyc
 app/__pycache__/main.cpython-311.pyc
+
+# Benchmark results and temporary files
+benchmark/benchmark_results.csv
+benchmark/thesis_results.csv
+benchmark/plots/
+benchmark/thesis_plots/
+benchmark/venv/
+benchmark/__pycache__/
+*.csv
+*.log

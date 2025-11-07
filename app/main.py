@@ -20,6 +20,15 @@ async def lifespan(app: FastAPI):
     # Init
     init_pg_schema()
     init_chroma()
+
+    # Warmup: Load embedding model
+    from embeddings import ollama_embed
+    try:
+        await ollama_embed(["warmup"])
+        logger.info("✅  Embedding model warmed up")
+    except Exception as e:
+        logger.warning(f"⚠️  Embedding warmup failed: {e}")
+
     logger.info("🚀  Dependencies ready; schema & collection initialized.")
     yield
     logger.info("👋  API shutting down.")

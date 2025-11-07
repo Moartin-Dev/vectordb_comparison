@@ -1,0 +1,74 @@
+{
+  "description": "Kuratierte Liste von OpenAPI-Spezifikationen für Benchmark-Tests",
+  "categories": {
+    "small": {
+      "description": "Kleine APIs (< 500 LOC)",
+      "specs": [
+        {
+          "name": "JSONPlaceholder",
+          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/main/APIs/jsonplaceholder.typicode.com/1.0.0/openapi.yaml",
+          "provider": "JSONPlaceholder",
+          "estimated_loc": 200
+        },
+        {
+          "name": "CoinGecko",
+          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/main/APIs/coingecko.com/3.0.0/openapi.yaml",
+          "provider": "CoinGecko",
+          "estimated_loc": 400
+        }
+      ]
+    },
+    "medium": {
+      "description": "Mittelgroße APIs (500-3000 LOC)",
+      "specs": [
+        {
+          "name": "GitHub REST API",
+          "url": "https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.yaml",
+          "provider": "GitHub",
+          "estimated_loc": 2500
+        },
+        {
+          "name": "Spotify Web API",
+          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/main/APIs/spotify.com/2024.11.7/openapi.yaml",
+          "provider": "Spotify",
+          "estimated_loc": 1500
+        },
+        {
+          "name": "OpenAI API",
+          "url": "https://raw.githubusercontent.com/openai/openai-openapi/master/openapi.yaml",
+          "provider": "OpenAI",
+          "estimated_loc": 1200
+        }
+      ]
+    },
+    "large": {
+      "description": "Große APIs (> 3000 LOC)",
+      "specs": [
+        {
+          "name": "Stripe API",
+          "url": "https://raw.githubusercontent.com/stripe/openapi/master/openapi/spec3.yaml",
+          "provider": "Stripe",
+          "estimated_loc": 15000,
+          "note": "Sehr umfangreiche Payment-API mit vielen Endpoints"
+        },
+        {
+          "name": "AWS API Gateway",
+          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/main/APIs/amazonaws.com/apigateway/2015-07-09/openapi.yaml",
+          "provider": "Amazon Web Services",
+          "estimated_loc": 5000
+        },
+        {
+          "name": "Azure Resource Manager",
+          "url": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/resources/resource-manager/Microsoft.Resources/stable/2021-04-01/resources.json",
+          "provider": "Microsoft Azure",
+          "estimated_loc": 4000
+        }
+      ]
+    }
+  },
+  "notes": [
+    "URLs können sich ändern - bei 404 bitte manuell aktualisieren",
+    "LOC-Schätzungen sind ungefähr und dienen zur Kategorisierung",
+    "Alle Specs sind öffentlich verfügbar und können ohne Authentifizierung abgerufen werden"
+  ]
+}

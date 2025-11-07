@@ -64,6 +64,8 @@ services:
     image: ollama/ollama:${OLLAMA_VERSION}
     container_name: ollama
     restart: unless-stopped
+    environment:
+      OLLAMA_KEEP_ALIVE: 10m
     ports:
       - "${OLLAMA_HOST_IP}:${OLLAMA_HOST_PORT}:11434"
     volumes:
@@ -92,6 +94,7 @@ services:
       CHROMA_URL: http://chroma:8000
       OLLAMA_URL: http://ollama:11434
       EMBEDDING_MODEL: ${EMBEDDING_MODEL}
+      EMBED_DIM: ${EMBED_DIM}
       TOP_K: ${TOP_K}
       CHROMA_WAIT_MAX_SECONDS: ${CHROMA_WAIT_MAX_SECONDS}
       CHROMA_WAIT_INTERVAL_SECONDS: ${CHROMA_WAIT_INTERVAL_SECONDS}

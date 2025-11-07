@@ -71,3 +71,28 @@ def query_topk(qvec: List[float], k: int) -> List[Dict[str, Any]]:
             "score": sim
         })
     return hits
+
+def get_stats() -> Dict[str, Any]:
+    """Gibt Statistiken über die PostgreSQL-Datenbank zurück"""
+    with psycopg.connect(_dsn()) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            # Anzahl Dokumente
+            cur.execute("SELECT COUNT(*) as count FROM documents;")
+            count = cur.fetchone()["count"]
+
+            # Datenbankgröße (nur documents Tabelle)
+            cur.execute("SELECT pg_total_relation_size('documents') as size;")
+            size_bytes = cur.fetchone()["size"]
+            size_mb = size_bytes / (1024 * 1024) if size_bytes else 0
+
+    return {
+        "document_count": count,
+        "size_mb": round(size_mb, 2)
+    }
+
+def reset_database():
+    """Löscht alle Dokumente aus der Datenbank"""
+    with psycopg.connect(_dsn(), autocommit=True) as conn:
+        with conn.cursor() as cur:
+            cur.execute("TRUNCATE TABLE documents;")
+            # Index wird automatisch beibehalten

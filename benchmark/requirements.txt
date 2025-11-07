@@ -1,0 +1,14 @@
+# Benchmark & Visualisierungs-Requirements
+
+# HTTP Client
+httpx>=0.27.0
+
+# Data Analysis & CSV
+pandas>=2.2.0
+
+# Plotting
+matplotlib>=3.8.0
+seaborn>=0.13.0
+
+# Scientific Computing
+numpy>=1.26.0
