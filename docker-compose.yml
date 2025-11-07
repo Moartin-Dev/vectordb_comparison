@@ -1,0 +1,134 @@
+version: '3.9'
+
+services:
+  pgvector:
+    image: pgvector/pgvector:${POSTGRES_VERSION}
+    container_name: pgvector
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    ports:
+      - "${PG_HOST_IP}:${PG_HOST_PORT}:5432"
+    volumes:
+      - pgvector-data:/var/lib/postgresql
+    networks:
+      - benchnet
+    secrets:
+      - source: postgres_password
+        target: postgres_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD_FILE: /run/secrets/pgadmin_password
+    ports:
+      - "${PGADMIN_HOST_IP}:${PGADMIN_HOST_PORT}:80"
+    depends_on:
+      - pgvector
+    networks:
+      - benchnet
+    secrets:
+      - source: pgadmin_password
+        target: pgadmin_password
+
+  chroma:
+    image: ghcr.io/chroma-core/chroma:${CHROMA_VERSION}
+    container_name: chromadb
+    restart: unless-stopped
+    environment:
+      CHROMA_SERVER_HOST: 0.0.0.0
+      CHROMA_SERVER_HTTP_PORT: 8000
+    ports:
+      - "${CHROMA_HOST_IP}:${CHROMA_HOST_PORT}:8000"
+    volumes:
+      - chroma-data:/chroma
+    networks:
+      - benchnet
+    # healthcheck:
+    #   test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/v2/heartbeat"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 10
+
+  ollama:
+    image: ollama/ollama:${OLLAMA_VERSION}
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_HOST_IP}:${OLLAMA_HOST_PORT}:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - benchnet
+    # healthcheck:
+    #   test: ["CMD", "curl", "-fsS", "http://localhost:11434/api/tags"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 20
+
+  api:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: wab-api
+    restart: unless-stopped
+    environment:
+      APP_ENV: dev
+      PG_HOST: pgvector
+      PG_PORT: 5432
+      PG_DB: ${POSTGRES_DB}
+      PG_USER: ${POSTGRES_USER}
+      PG_PASSWORD_FILE: /run/secrets/postgres_password
+      CHROMA_URL: http://chroma:8000
+      OLLAMA_URL: http://ollama:11434
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL}
+      TOP_K: ${TOP_K}
+      CHROMA_WAIT_MAX_SECONDS: ${CHROMA_WAIT_MAX_SECONDS}
+      CHROMA_WAIT_INTERVAL_SECONDS: ${CHROMA_WAIT_INTERVAL_SECONDS}
+      OLLAMA_WAIT_MAX_SECONDS: ${OLLAMA_WAIT_MAX_SECONDS}
+      OLLAMA_WAIT_INTERVAL_SECONDS: ${OLLAMA_WAIT_INTERVAL_SECONDS}
+      PG_WAIT_MAX_SECONDS: ${PG_WAIT_MAX_SECONDS}
+      PG_WAIT_INTERVAL_SECONDS: ${PG_WAIT_INTERVAL_SECONDS}
+    ports:
+      - "${API_HOST_IP}:${API_HOST_PORT}:8000"
+    depends_on:
+      pgvector:
+        condition: service_healthy
+      chroma:
+        condition: service_started
+      ollama:
+        condition: service_started
+    networks:
+      - benchnet
+    secrets:
+      - source: postgres_password
+        target: postgres_password
+      - source: pgadmin_password
+        target: pgadmin_password
+    volumes:
+      - ./app:/app
+
+volumes:
+  pgvector-data:
+  chroma-data:
+  ollama-data:
+
+networks:
+  benchnet:
+    driver: bridge
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  pgadmin_password:
+    file: ./secrets/pgadmin_password.txt
