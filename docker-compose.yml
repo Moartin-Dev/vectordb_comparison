@@ -120,6 +120,20 @@ services:
         target: pgadmin_password
     volumes:
       - ./app:/app
+      - ./benchmark:/benchmark
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: wab-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_HOST_IP}:${FRONTEND_HOST_PORT}:80"
+    depends_on:
+      - api
+    networks:
+      - benchnet
 
 volumes:
   pgvector-data:

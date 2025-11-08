@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from log import logger
 from config import (
@@ -9,6 +10,7 @@ from waiters import wait_for_http_ok, wait_for_postgres
 from db_pg import init_pg_schema
 from chroma_client import init_chroma
 from routers import router as api_router
+from benchmark_streaming import router as benchmark_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,6 +36,17 @@ async def lifespan(app: FastAPI):
     logger.info("👋  API shutting down.")
 
 app = FastAPI(title="WAB Benchmark API", lifespan=lifespan)
+
+# CORS für Frontend (Angular)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:4200", "http://frontend:4200"],  # Angular dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(api_router)
+app.include_router(benchmark_router)
 
 

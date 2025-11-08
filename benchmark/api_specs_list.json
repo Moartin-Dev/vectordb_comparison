@@ -2,7 +2,7 @@
   "description": "Kuratierte Liste von OpenAPI-Spezifikationen für Benchmark-Tests",
   "categories": {
     "small": {
-      "description": "Kleine APIs (< 500 LOC)",
+      "description": "Kleine APIs (< 1000 LOC)",
       "specs": [
         {
           "name": "Petstore",
@@ -19,49 +19,43 @@
       ]
     },
     "medium": {
-      "description": "Mittelgroße APIs (500-3000 LOC)",
+      "description": "Mittelgroße APIs (1000-10000 LOC)",
       "specs": [
         {
-          "name": "GitHub REST API",
-          "url": "https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.yaml",
-          "provider": "GitHub",
-          "estimated_loc": 2500
+          "name": "OpenAI API",
+          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/refs/heads/main/APIs/openai.com/1.2.0/openapi.yaml",
+          "provider": "OpenAI",
+          "estimated_loc": 3500
+        },
+         {
+          "name": "Salesloft.com API",
+          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/refs/heads/main/APIs/salesloft.com/v2/openapi.yaml",
+          "provider": "SalesLoft",
+          "estimated_loc": 9900
         },
         {
           "name": "Spotify Web API",
-          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/main/APIs/spotify.com/2024.11.7/openapi.yaml",
+          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/refs/heads/main/APIs/spotify.com/1.0.0/openapi.yaml",
           "provider": "Spotify",
-          "estimated_loc": 1500
-        },
-        {
-          "name": "OpenAI API",
-          "url": "https://raw.githubusercontent.com/openai/openai-openapi/master/openapi.yaml",
-          "provider": "OpenAI",
-          "estimated_loc": 1200
+          "estimated_loc": 7200
         }
       ]
     },
     "large": {
-      "description": "Große APIs (> 3000 LOC)",
+      "description": "Große APIs (> 10000 LOC)",
       "specs": [
         {
           "name": "Stripe API",
           "url": "https://raw.githubusercontent.com/stripe/openapi/master/openapi/spec3.yaml",
           "provider": "Stripe",
-          "estimated_loc": 15000,
+          "estimated_loc": 150000,
           "note": "Sehr umfangreiche Payment-API mit vielen Endpoints"
         },
         {
-          "name": "AWS API Gateway",
-          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/main/APIs/amazonaws.com/apigateway/2015-07-09/openapi.yaml",
-          "provider": "Amazon Web Services",
-          "estimated_loc": 5000
-        },
-        {
-          "name": "Azure Resource Manager",
-          "url": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/resources/resource-manager/Microsoft.Resources/stable/2021-04-01/resources.json",
-          "provider": "Microsoft Azure",
-          "estimated_loc": 4000
+          "name": "GitHub REST API",
+          "url": "https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.yaml",
+          "provider": "GitHub",
+          "estimated_loc": 236000
         }
       ]
     }
