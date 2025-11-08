@@ -5,16 +5,16 @@
       "description": "Kleine APIs (< 500 LOC)",
       "specs": [
         {
-          "name": "JSONPlaceholder",
-          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/main/APIs/jsonplaceholder.typicode.com/1.0.0/openapi.yaml",
-          "provider": "JSONPlaceholder",
-          "estimated_loc": 200
+          "name": "Petstore",
+          "url": "https://petstore3.swagger.io/api/v3/openapi.yaml",
+          "provider": "Swagger",
+          "estimated_loc": 830
         },
         {
-          "name": "CoinGecko",
-          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/main/APIs/coingecko.com/3.0.0/openapi.yaml",
-          "provider": "CoinGecko",
-          "estimated_loc": 400
+          "name": "AbstractAPI Geolocation",
+          "url": "https://api.apis.guru/v2/specs/abstractapi.com/geolocation/1.0.0/openapi.json",
+          "provider": "AbstractAPI",
+          "estimated_loc": 200
         }
       ]
     },

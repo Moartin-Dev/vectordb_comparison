@@ -30,6 +30,13 @@ class BenchmarkVisualizer:
         plt.rcParams['figure.figsize'] = (12, 6)
         plt.rcParams['font.size'] = 10
 
+        # Konsistente Farbpalette: PgVector = Blau, ChromaDB = Orange
+        self.db_colors = {
+            'PgVector': '#1f77b4',  # Blau
+            'ChromaDB': '#ff7f0e'   # Orange
+        }
+        self.palette = [self.db_colors['PgVector'], self.db_colors['ChromaDB']]
+
     def create_ingest_comparison(self):
         """Vergleicht Ingest-Performance zwischen PgVector und ChromaDB"""
         print("📈 Creating ingest performance comparison...")
@@ -60,13 +67,14 @@ class BenchmarkVisualizer:
             x='API',
             y='Time (ms)',
             hue='Database',
+            palette=self.palette,
             ax=axes[0]
         )
-        axes[0].set_title('Ingest Performance Comparison (Boxplot)')
-        axes[0].set_xlabel('API Specification')
-        axes[0].set_ylabel('Write Time (ms)')
+        axes[0].set_title('Ingest-Performance-Vergleich (Boxplot)')
+        axes[0].set_xlabel('API-Spezifikation')
+        axes[0].set_ylabel('Schreibzeit (ms)')
         axes[0].tick_params(axis='x', rotation=45)
-        axes[0].legend(title='Database')
+        axes[0].legend(title='Datenbank')
 
         # Barplot mit Durchschnittswerten
         avg_ingest = ingest_df.groupby(['API', 'Database'])['Time (ms)'].mean().reset_index()
@@ -75,13 +83,14 @@ class BenchmarkVisualizer:
             x='API',
             y='Time (ms)',
             hue='Database',
+            palette=self.palette,
             ax=axes[1]
         )
-        axes[1].set_title('Average Ingest Performance')
-        axes[1].set_xlabel('API Specification')
-        axes[1].set_ylabel('Average Write Time (ms)')
+        axes[1].set_title('Durchschnittliche Ingest-Performance')
+        axes[1].set_xlabel('API-Spezifikation')
+        axes[1].set_ylabel('Durchschnittliche Schreibzeit (ms)')
         axes[1].tick_params(axis='x', rotation=45)
-        axes[1].legend(title='Database')
+        axes[1].legend(title='Datenbank')
 
         plt.tight_layout()
         output_file = self.output_dir / 'ingest_comparison.png'
@@ -119,13 +128,14 @@ class BenchmarkVisualizer:
             x='API',
             y='Time (ms)',
             hue='Database',
+            palette=self.palette,
             ax=axes[0]
         )
-        axes[0].set_title('Query Performance Comparison (Boxplot)')
-        axes[0].set_xlabel('API Specification')
-        axes[0].set_ylabel('Query Time (ms)')
+        axes[0].set_title('Query-Performance-Vergleich (Boxplot)')
+        axes[0].set_xlabel('API-Spezifikation')
+        axes[0].set_ylabel('Abfragezeit (ms)')
         axes[0].tick_params(axis='x', rotation=45)
-        axes[0].legend(title='Database')
+        axes[0].legend(title='Datenbank')
 
         # Violin Plot
         sns.violinplot(
@@ -133,14 +143,15 @@ class BenchmarkVisualizer:
             x='API',
             y='Time (ms)',
             hue='Database',
+            palette=self.palette,
             ax=axes[1],
             split=True
         )
-        axes[1].set_title('Query Performance Distribution (Violin Plot)')
-        axes[1].set_xlabel('API Specification')
-        axes[1].set_ylabel('Query Time (ms)')
+        axes[1].set_title('Query-Performance-Verteilung (Violin Plot)')
+        axes[1].set_xlabel('API-Spezifikation')
+        axes[1].set_ylabel('Abfragezeit (ms)')
         axes[1].tick_params(axis='x', rotation=45)
-        axes[1].legend(title='Database')
+        axes[1].legend(title='Datenbank')
 
         plt.tight_layout()
         output_file = self.output_dir / 'query_comparison.png'
@@ -177,11 +188,14 @@ class BenchmarkVisualizer:
             x='Category',
             y='Time (ms)',
             hue='Database',
+            palette=self.palette,
             order=category_order,
             ax=axes[0, 0]
         )
-        axes[0, 0].set_title('Ingest Time by API Category')
-        axes[0, 0].set_ylabel('Write Time (ms)')
+        axes[0, 0].set_title('Ingest-Zeit nach API-Kategorie')
+        axes[0, 0].set_xlabel('Kategorie')
+        axes[0, 0].set_ylabel('Schreibzeit (ms)')
+        axes[0, 0].legend(title='Datenbank')
 
         # 2. Query Time by Category
         query_by_cat = []
@@ -203,11 +217,14 @@ class BenchmarkVisualizer:
             x='Category',
             y='Time (ms)',
             hue='Database',
+            palette=self.palette,
             order=category_order,
             ax=axes[0, 1]
         )
-        axes[0, 1].set_title('Query Time by API Category')
-        axes[0, 1].set_ylabel('Query Time (ms)')
+        axes[0, 1].set_title('Query-Zeit nach API-Kategorie')
+        axes[0, 1].set_xlabel('Kategorie')
+        axes[0, 1].set_ylabel('Abfragezeit (ms)')
+        axes[0, 1].legend(title='Datenbank')
 
         # 3. Chunks vs Ingest Time
         axes[1, 0].scatter(
@@ -215,6 +232,7 @@ class BenchmarkVisualizer:
             self.df['pg_write_ms'],
             alpha=0.6,
             label='PgVector',
+            color=self.db_colors['PgVector'],
             s=50
         )
         axes[1, 0].scatter(
@@ -222,11 +240,12 @@ class BenchmarkVisualizer:
             self.df['chroma_write_ms'],
             alpha=0.6,
             label='ChromaDB',
+            color=self.db_colors['ChromaDB'],
             s=50
         )
-        axes[1, 0].set_title('Ingest Time vs Number of Chunks')
-        axes[1, 0].set_xlabel('Number of Chunks')
-        axes[1, 0].set_ylabel('Write Time (ms)')
+        axes[1, 0].set_title('Ingest-Zeit vs. Anzahl Chunks')
+        axes[1, 0].set_xlabel('Anzahl Chunks')
+        axes[1, 0].set_ylabel('Schreibzeit (ms)')
         axes[1, 0].legend()
         axes[1, 0].grid(True, alpha=0.3)
 
@@ -246,10 +265,10 @@ class BenchmarkVisualizer:
 
         axes[1, 1].bar(x - width/2, speedup_data['ingest_speedup'], width, label='Ingest', alpha=0.8)
         axes[1, 1].bar(x + width/2, speedup_data['query_speedup'], width, label='Query', alpha=0.8)
-        axes[1, 1].axhline(y=1, color='r', linestyle='--', label='Equal Performance')
-        axes[1, 1].set_title('PgVector/ChromaDB Speedup Ratio')
+        axes[1, 1].axhline(y=1, color='r', linestyle='--', label='Gleiche Performance')
+        axes[1, 1].set_title('PgVector/ChromaDB Speedup-Verhältnis')
         axes[1, 1].set_xlabel('API')
-        axes[1, 1].set_ylabel('Speedup (>1 = PgVector slower)')
+        axes[1, 1].set_ylabel('Speedup (>1 = PgVector langsamer)')
         axes[1, 1].set_xticks(x)
         axes[1, 1].set_xticklabels(speedup_data['api_name'], rotation=45, ha='right')
         axes[1, 1].legend()
@@ -274,7 +293,7 @@ class BenchmarkVisualizer:
             summary_data.append({
                 'API': api_name,
                 'Category': api_df['api_category'].iloc[0],
-                'N': len(api_df),
+                'Runs (N)': len(api_df),
                 'Chunks (avg)': api_df['num_chunks'].mean(),
                 'PG Ingest (ms)': f"{api_df['pg_write_ms'].mean():.1f} ± {api_df['pg_write_ms'].std():.1f}",
                 'Chroma Ingest (ms)': f"{api_df['chroma_write_ms'].mean():.1f} ± {api_df['chroma_write_ms'].std():.1f}",
@@ -284,8 +303,8 @@ class BenchmarkVisualizer:
 
         summary_df = pd.DataFrame(summary_data)
 
-        # Als Tabellen-Plot
-        fig, ax = plt.subplots(figsize=(14, len(summary_data) * 0.6 + 1))
+        # Als Tabellen-Plot (größere Figur für bessere Lesbarkeit)
+        fig, ax = plt.subplots(figsize=(16, len(summary_data) * 0.8 + 1.5))
         ax.axis('tight')
         ax.axis('off')
 
@@ -298,8 +317,24 @@ class BenchmarkVisualizer:
         )
 
         table.auto_set_font_size(False)
-        table.set_fontsize(9)
-        table.scale(1, 2)
+        table.set_fontsize(10)
+        table.scale(1, 2.5)
+
+        # Automatische Spaltenbreite nur für bestimmte Spalten
+        # Nicht für die sehr kurzen Spalten wie Runs (N), Category, Chunks
+        long_cols = [i for i, col in enumerate(summary_df.columns)
+                     if col not in ['Runs (N)', 'Category', 'Chunks (avg)']]
+        if long_cols:
+            table.auto_set_column_width(col=long_cols)
+
+        # Setze fixe Breite für kurze Spalten (breiter als auto)
+        fixed_width = 0.15  # Feste Breite für Runs (N), Category, Chunks
+        short_cols = ['Runs (N)', 'Category', 'Chunks (avg)']
+        for col_name in short_cols:
+            if col_name in summary_df.columns:
+                col_idx = list(summary_df.columns).index(col_name)
+                for j in range(len(summary_df) + 1):  # +1 für Header
+                    table[(j, col_idx)].set_width(fixed_width)
 
         # Header-Style
         for i in range(len(summary_df.columns)):
@@ -312,7 +347,7 @@ class BenchmarkVisualizer:
                 if i % 2 == 0:
                     table[(i, j)].set_facecolor('#f0f0f0')
 
-        plt.title('Statistical Summary of Benchmark Results', fontsize=14, pad=20, weight='bold')
+        plt.title('Statistische Zusammenfassung der Benchmark-Ergebnisse', fontsize=14, pad=20, weight='bold')
 
         output_file = self.output_dir / 'statistical_summary.png'
         plt.savefig(output_file, dpi=300, bbox_inches='tight')
@@ -344,12 +379,14 @@ class BenchmarkVisualizer:
         x = np.arange(len(size_data))
         width = 0.35
 
-        ax.bar(x - width/2, size_data['db_size_pg_mb'], width, label='PgVector', alpha=0.8)
-        ax.bar(x + width/2, size_data['db_size_chroma_mb'], width, label='ChromaDB', alpha=0.8)
+        ax.bar(x - width/2, size_data['db_size_pg_mb'], width, label='PgVector',
+               color=self.db_colors['PgVector'], alpha=0.8)
+        ax.bar(x + width/2, size_data['db_size_chroma_mb'], width, label='ChromaDB',
+               color=self.db_colors['ChromaDB'], alpha=0.8)
 
-        ax.set_title('Database Size Comparison')
-        ax.set_xlabel('API Specification')
-        ax.set_ylabel('Database Size (MB)')
+        ax.set_title('Datenbankgröße-Vergleich')
+        ax.set_xlabel('API-Spezifikation')
+        ax.set_ylabel('Datenbankgröße (MB)')
         ax.set_xticks(x)
         ax.set_xticklabels(size_data['api_name'], rotation=45, ha='right')
         ax.legend()
