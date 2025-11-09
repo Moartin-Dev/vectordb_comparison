@@ -21,6 +21,7 @@ import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { BenchmarkService } from '../../services/benchmark.service';
 import { BenchmarkProgress, BenchmarkResult } from '../../models/benchmark.types';
+import html2canvas from 'html2canvas';
 
 // Plotly.js Import
 declare const Plotly: any;
@@ -67,45 +68,116 @@ declare const Plotly: any;
 
       <!-- Charts - One per row for better readability -->
       <div class="space-y-6">
-        <!-- Ingest Performance Chart -->
+        <!-- Ingest Performance Boxplot -->
         <div class="bg-white rounded-lg shadow-md p-6">
-          <h3 class="text-lg font-bold mb-4 text-gray-800">
-            Ingest Performance
-          </h3>
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-gray-800">
+              Ingest Performance (Boxplot)
+            </h3>
+            <button
+              *ngIf="results.length > 0"
+              (click)="downloadChart('ingest-chart', 'ingest_boxplot.png')"
+              class="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors">
+              Download PNG
+            </button>
+          </div>
           <div id="ingest-chart" class="h-[600px]"></div>
         </div>
 
-        <!-- Query Performance Chart -->
+        <!-- Query Performance Boxplot -->
         <div class="bg-white rounded-lg shadow-md p-6">
-          <h3 class="text-lg font-bold mb-4 text-gray-800">
-            Query Performance
-          </h3>
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-gray-800">
+              Query Performance (Boxplot)
+            </h3>
+            <button
+              *ngIf="results.length > 0"
+              (click)="downloadChart('query-chart', 'query_boxplot.png')"
+              class="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors">
+              Download PNG
+            </button>
+          </div>
           <div id="query-chart" class="h-[600px]"></div>
+        </div>
+
+        <!-- Ingest Performance Violin Plot -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-gray-800">
+              Ingest Performance (Violin Plot)
+            </h3>
+            <button
+              *ngIf="results.length > 0"
+              (click)="downloadChart('ingest-violin-chart', 'ingest_violin.png')"
+              class="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors">
+              Download PNG
+            </button>
+          </div>
+          <div id="ingest-violin-chart" class="h-[600px]"></div>
+        </div>
+
+        <!-- Query Performance Violin Plot -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-gray-800">
+              Query Performance (Violin Plot)
+            </h3>
+            <button
+              *ngIf="results.length > 0"
+              (click)="downloadChart('query-violin-chart', 'query_violin.png')"
+              class="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors">
+              Download PNG
+            </button>
+          </div>
+          <div id="query-violin-chart" class="h-[600px]"></div>
         </div>
 
         <!-- Database Size Chart -->
         <div class="bg-white rounded-lg shadow-md p-6">
-          <h3 class="text-lg font-bold mb-4 text-gray-800">
-            Datenbankgröße
-          </h3>
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-gray-800">
+              Datenbankgröße
+            </h3>
+            <button
+              *ngIf="results.length > 0"
+              (click)="downloadChart('size-chart', 'database_size.png')"
+              class="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors">
+              Download PNG
+            </button>
+          </div>
           <div id="size-chart" class="h-[600px]"></div>
         </div>
 
         <!-- Results Count Chart -->
         <div class="bg-white rounded-lg shadow-md p-6">
-          <h3 class="text-lg font-bold mb-4 text-gray-800">
-            Anzahl Ergebnisse
-          </h3>
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-gray-800">
+              Anzahl Ergebnisse
+            </h3>
+            <button
+              *ngIf="results.length > 0"
+              (click)="downloadChart('results-chart', 'results_count.png')"
+              class="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors">
+              Download PNG
+            </button>
+          </div>
           <div id="results-chart" class="h-[600px]"></div>
         </div>
       </div>
 
       <!-- Statistical Summary Table (shown only when benchmark is completed) -->
       <div *ngIf="showStatisticalSummary()" class="mt-6 bg-white rounded-lg shadow-md p-6">
-        <h3 class="text-lg font-bold mb-4 text-gray-800">
-          Statistische Zusammenfassung
-        </h3>
-        <div class="overflow-x-auto">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-bold text-gray-800">
+            Statistische Zusammenfassung
+          </h3>
+          <button
+            (click)="downloadTable()"
+            class="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors">
+            Download PNG
+          </button>
+        </div>
+        <div id="statistical-table" class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-indigo-900">
               <tr>
@@ -118,6 +190,8 @@ declare const Plotly: any;
                 <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Chroma Ingest (ms)</th>
                 <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">PG Query (ms)</th>
                 <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Chroma Query (ms)</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">PG Size (MB)</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Chroma Size (MB)</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
@@ -133,6 +207,8 @@ declare const Plotly: any;
                 <td class="px-4 py-3 text-sm text-center text-gray-700">{{ stat.chroma_ingest }}</td>
                 <td class="px-4 py-3 text-sm text-center text-gray-700">{{ stat.pg_query }}</td>
                 <td class="px-4 py-3 text-sm text-center text-gray-700">{{ stat.chroma_query }}</td>
+                <td class="px-4 py-3 text-sm text-center text-gray-700">{{ stat.db_size_pg | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-sm text-center text-gray-700">{{ stat.db_size_chroma | number:'1.2-2' }}</td>
               </tr>
             </tbody>
           </table>
@@ -319,6 +395,10 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
       const chunksValues = apiResults.map(r => r.num_chunks);
 
       const loc = this.apiLocMapping[apiName] || 0;
+      // Database sizes - use the last result's values (they should be consistent)
+      const dbSizePg = apiResults[apiResults.length - 1].db_size_pg_mb;
+      const dbSizeChroma = apiResults[apiResults.length - 1].db_size_chroma_mb;
+
       return {
         api: apiName,
         category: apiResults[0].api_category,
@@ -328,7 +408,9 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
         pg_ingest: this.formatStat(pgIngestValues),
         chroma_ingest: this.formatStat(chromaIngestValues),
         pg_query: this.formatStat(pgQueryValues),
-        chroma_query: this.formatStat(chromaQueryValues)
+        chroma_query: this.formatStat(chromaQueryValues),
+        db_size_pg: dbSizePg,
+        db_size_chroma: dbSizeChroma
       };
     });
 
@@ -370,6 +452,20 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
       title: 'Query Performance'
     });
 
+    Plotly.newPlot('ingest-violin-chart', emptyData, {
+      ...this.layout,
+      xaxis: { title: 'API' },
+      yaxis: { title: 'Zeit (ms)' },
+      title: 'Ingest Performance (Violin)'
+    });
+
+    Plotly.newPlot('query-violin-chart', emptyData, {
+      ...this.layout,
+      xaxis: { title: 'API' },
+      yaxis: { title: 'Zeit (ms)' },
+      title: 'Query Performance (Violin)'
+    });
+
     Plotly.newPlot('size-chart', emptyData, {
       ...this.layout,
       xaxis: { title: 'API' },
@@ -391,9 +487,11 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
     // Gruppiere Daten nach API
     const grouped = this.groupByApi();
 
-    // Update Ingest Chart
+    // Update all charts
     this.updateIngestChart(grouped);
     this.updateQueryChart(grouped);
+    this.updateIngestViolinChart(grouped);
+    this.updateQueryViolinChart(grouped);
     this.updateSizeChart(grouped);
     this.updateResultsChart(grouped);
   }
@@ -412,7 +510,7 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
   private updateIngestChart(grouped: Map<string, BenchmarkResult[]>): void {
     const apis = Array.from(grouped.keys());
 
-    // Für Boxplots brauchen wir alle Werte, nicht nur den Durchschnitt
+    // Boxplot Version
     const pgTraces = apis.map(api => {
       const results = grouped.get(api)!;
       const values = results.map(r => r.pg_write_ms);
@@ -445,10 +543,50 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  private updateIngestViolinChart(grouped: Map<string, BenchmarkResult[]>): void {
+    const apis = Array.from(grouped.keys());
+
+    // Violin Plot Version
+    const pgTraces = apis.map(api => {
+      const results = grouped.get(api)!;
+      const values = results.map(r => r.pg_write_ms);
+      return {
+        y: values,
+        type: 'violin',
+        name: `${api} - PgVector`,
+        marker: { color: this.colors.pgvector },
+        box: { visible: true },
+        meanline: { visible: true }
+      };
+    });
+
+    const chromaTraces = apis.map(api => {
+      const results = grouped.get(api)!;
+      const values = results.map(r => r.chroma_write_ms);
+      return {
+        y: values,
+        type: 'violin',
+        name: `${api} - ChromaDB`,
+        marker: { color: this.colors.chromadb },
+        box: { visible: true },
+        meanline: { visible: true }
+      };
+    });
+
+    const traces = [...pgTraces, ...chromaTraces];
+
+    Plotly.react('ingest-violin-chart', traces, {
+      ...this.layout,
+      yaxis: { title: 'Schreibzeit (ms)' },
+      title: 'Ingest Performance (Violin Plot)',
+      showlegend: true
+    });
+  }
+
   private updateQueryChart(grouped: Map<string, BenchmarkResult[]>): void {
     const apis = Array.from(grouped.keys());
 
-    // Für Boxplots brauchen wir alle Werte, nicht nur den Durchschnitt
+    // Boxplot Version
     const pgTraces = apis.map(api => {
       const results = grouped.get(api)!;
       const values = results.map(r => r.pg_query_ms);
@@ -477,6 +615,46 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
       ...this.layout,
       yaxis: { title: 'Abfragezeit (ms)' },
       title: 'Query Performance (Boxplot)',
+      showlegend: true
+    });
+  }
+
+  private updateQueryViolinChart(grouped: Map<string, BenchmarkResult[]>): void {
+    const apis = Array.from(grouped.keys());
+
+    // Violin Plot Version
+    const pgTraces = apis.map(api => {
+      const results = grouped.get(api)!;
+      const values = results.map(r => r.pg_query_ms);
+      return {
+        y: values,
+        type: 'violin',
+        name: `${api} - PgVector`,
+        marker: { color: this.colors.pgvector },
+        box: { visible: true },
+        meanline: { visible: true }
+      };
+    });
+
+    const chromaTraces = apis.map(api => {
+      const results = grouped.get(api)!;
+      const values = results.map(r => r.chroma_query_ms);
+      return {
+        y: values,
+        type: 'violin',
+        name: `${api} - ChromaDB`,
+        marker: { color: this.colors.chromadb },
+        box: { visible: true },
+        meanline: { visible: true }
+      };
+    });
+
+    const traces = [...pgTraces, ...chromaTraces];
+
+    Plotly.react('query-violin-chart', traces, {
+      ...this.layout,
+      yaxis: { title: 'Abfragezeit (ms)' },
+      title: 'Query Performance (Violin Plot)',
       showlegend: true
     });
   }
@@ -523,5 +701,54 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
       yaxis: { title: 'Anzahl Ergebnisse' },
       title: 'Durchschnittliche Anzahl Ergebnisse'
     });
+  }
+
+  /**
+   * Downloads a Plotly chart as PNG using Plotly's built-in functionality
+   * @param chartId - The DOM ID of the chart element
+   * @param filename - The filename for the downloaded PNG
+   */
+  downloadChart(chartId: string, filename: string): void {
+    Plotly.downloadImage(chartId, {
+      format: 'png',
+      width: 1920,
+      height: 1080,
+      filename: filename.replace('.png', '')
+    });
+  }
+
+  /**
+   * Downloads the statistical summary table as PNG using html2canvas
+   */
+  async downloadTable(): Promise<void> {
+    const element = document.getElementById('statistical-table');
+    if (!element) {
+      console.error('Statistical table element not found');
+      return;
+    }
+
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,  // Higher resolution
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+
+      // Convert canvas to blob and trigger download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'statistical_summary.png';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }
+      });
+    } catch (error) {
+      console.error('Failed to download table:', error);
+    }
   }
 }
