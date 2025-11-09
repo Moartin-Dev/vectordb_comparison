@@ -5,7 +5,7 @@ from config import CHUNK_SIZE, CHUNK_OVERLAP
 from utils import extract_text_from_openapi, chunk_text, now_ms
 from embeddings import ollama_embed
 from db_pg import replace_source as pg_replace, query_topk as pg_query, get_stats as pg_get_stats, reset_database as pg_reset
-from chroma_client import upsert_source as chroma_upsert, query as chroma_query, get_stats as chroma_get_stats, reset_collection as chroma_reset
+from chroma_client import upsert_source as chroma_upsert, query as chroma_query, get_stats as chroma_get_stats, reset_collection as chroma_reset, get_filesystem_size as chroma_get_fs_size
 
 
 router = APIRouter()
@@ -99,7 +99,8 @@ async def stats():
         "pg_document_count": pg_stats["document_count"],
         "pg_size_mb": pg_stats["size_mb"],
         "chroma_document_count": chroma_stats["document_count"],
-        "chroma_size_mb": chroma_stats["size_mb"]
+        "chroma_size_mb": chroma_stats["size_mb"],
+        "chroma_filesystem_mb": chroma_get_fs_size()  # Für Differenzberechnung
     }
 
 @router.post("/reset")

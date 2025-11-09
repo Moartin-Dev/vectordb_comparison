@@ -272,9 +272,43 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
   // Plotly Chart Config
   private readonly layout = {
     autosize: true,
-    margin: { t: 40, r: 20, b: 40, l: 60 },
+    margin: { t: 60, r: 20, b: 60, l: 80 },  // Mehr Platz für größere Schrift
     showlegend: true,
-    legend: { orientation: 'h', y: -0.2 }
+    legend: { orientation: 'h', y: -0.2 },
+    font: {
+      family: 'Arial, sans-serif',
+      size: 12
+    },
+    yaxis: {
+      gridcolor: '#d1d5db',  // Dunkleres Grau (TailwindCSS gray-300)
+      gridwidth: 1.5,        // Etwas dicker
+      title: {
+        font: {
+          size: 14,
+          family: 'Arial, sans-serif',
+          color: '#000000'
+        },
+        standoff: 15
+      },
+      tickfont: {
+        size: 12
+      }
+    },
+    xaxis: {
+      gridcolor: '#e5e7eb',  // Helleres Grau für x-Achse (TailwindCSS gray-200)
+      gridwidth: 1,
+      title: {
+        font: {
+          size: 14,
+          family: 'Arial, sans-serif',
+          color: '#000000'
+        },
+        standoff: 15
+      },
+      tickfont: {
+        size: 12
+      }
+    }
   };
 
   private readonly colors = {
@@ -440,44 +474,98 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
 
     Plotly.newPlot('ingest-chart', emptyData, {
       ...this.layout,
-      xaxis: { title: 'API' },
-      yaxis: { title: 'Zeit (ms)' },
-      title: 'Ingest Performance'
+      xaxis: {
+        ...this.layout.xaxis,
+        title: '<b>API</b>'
+      },
+      yaxis: {
+        ...this.layout.yaxis,
+        title: '<b>Zeit (ms)</b>'
+      },
+      title: {
+        text: '<b>Ingest Performance</b>',
+        font: { size: 16 }
+      }
     });
 
     Plotly.newPlot('query-chart', emptyData, {
       ...this.layout,
-      xaxis: { title: 'API' },
-      yaxis: { title: 'Zeit (ms)' },
-      title: 'Query Performance'
+      xaxis: {
+        ...this.layout.xaxis,
+        title: '<b>API</b>'
+      },
+      yaxis: {
+        ...this.layout.yaxis,
+        title: '<b>Zeit (ms)</b>'
+      },
+      title: {
+        text: '<b>Query Performance</b>',
+        font: { size: 16 }
+      }
     });
 
     Plotly.newPlot('ingest-violin-chart', emptyData, {
       ...this.layout,
-      xaxis: { title: 'API' },
-      yaxis: { title: 'Zeit (ms)' },
-      title: 'Ingest Performance (Violin)'
+      xaxis: {
+        ...this.layout.xaxis,
+        title: '<b>API</b>'
+      },
+      yaxis: {
+        ...this.layout.yaxis,
+        title: '<b>Zeit (ms)</b>'
+      },
+      title: {
+        text: '<b>Ingest Performance (Violin)</b>',
+        font: { size: 16 }
+      }
     });
 
     Plotly.newPlot('query-violin-chart', emptyData, {
       ...this.layout,
-      xaxis: { title: 'API' },
-      yaxis: { title: 'Zeit (ms)' },
-      title: 'Query Performance (Violin)'
+      xaxis: {
+        ...this.layout.xaxis,
+        title: '<b>API</b>'
+      },
+      yaxis: {
+        ...this.layout.yaxis,
+        title: '<b>Zeit (ms)</b>'
+      },
+      title: {
+        text: '<b>Query Performance (Violin)</b>',
+        font: { size: 16 }
+      }
     });
 
     Plotly.newPlot('size-chart', emptyData, {
       ...this.layout,
-      xaxis: { title: 'API' },
-      yaxis: { title: 'Größe (MB)' },
-      title: 'Datenbankgröße'
+      xaxis: {
+        ...this.layout.xaxis,
+        title: '<b>API</b>'
+      },
+      yaxis: {
+        ...this.layout.yaxis,
+        title: '<b>Größe (MB)</b>'
+      },
+      title: {
+        text: '<b>Datenbankgröße</b>',
+        font: { size: 16 }
+      }
     });
 
     Plotly.newPlot('results-chart', emptyData, {
       ...this.layout,
-      xaxis: { title: 'API' },
-      yaxis: { title: 'Anzahl' },
-      title: 'Gefundene Ergebnisse'
+      xaxis: {
+        ...this.layout.xaxis,
+        title: '<b>API</b>'
+      },
+      yaxis: {
+        ...this.layout.yaxis,
+        title: '<b>Anzahl</b>'
+      },
+      title: {
+        text: '<b>Gefundene Ergebnisse</b>',
+        font: { size: 16 }
+      }
     });
   }
 
@@ -537,8 +625,14 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
 
     Plotly.react('ingest-chart', traces, {
       ...this.layout,
-      yaxis: { title: 'Schreibzeit (ms)' },
-      title: 'Ingest Performance (Boxplot)',
+      yaxis: {
+        ...this.layout.yaxis,
+        title: '<b>Schreibzeit (ms)</b>'
+      },
+      title: {
+        text: '<b>Ingest Performance (Boxplot)</b>',
+        font: { size: 16 }
+      },
       showlegend: true
     });
   }
@@ -577,8 +671,14 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
 
     Plotly.react('ingest-violin-chart', traces, {
       ...this.layout,
-      yaxis: { title: 'Schreibzeit (ms)' },
-      title: 'Ingest Performance (Violin Plot)',
+      yaxis: {
+        ...this.layout.yaxis,
+        title: '<b>Schreibzeit (ms)</b>'
+      },
+      title: {
+        text: '<b>Ingest Performance (Violin Plot)</b>',
+        font: { size: 16 }
+      },
       showlegend: true
     });
   }
@@ -613,8 +713,14 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
 
     Plotly.react('query-chart', traces, {
       ...this.layout,
-      yaxis: { title: 'Abfragezeit (ms)' },
-      title: 'Query Performance (Boxplot)',
+      yaxis: {
+        ...this.layout.yaxis,
+        title: '<b>Abfragezeit (ms)</b>'
+      },
+      title: {
+        text: '<b>Query Performance (Boxplot)</b>',
+        font: { size: 16 }
+      },
       showlegend: true
     });
   }
@@ -653,8 +759,14 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
 
     Plotly.react('query-violin-chart', traces, {
       ...this.layout,
-      yaxis: { title: 'Abfragezeit (ms)' },
-      title: 'Query Performance (Violin Plot)',
+      yaxis: {
+        ...this.layout.yaxis,
+        title: '<b>Abfragezeit (ms)</b>'
+      },
+      title: {
+        text: '<b>Query Performance (Violin Plot)</b>',
+        font: { size: 16 }
+      },
       showlegend: true
     });
   }
@@ -672,9 +784,18 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
 
     Plotly.react('size-chart', traces, {
       ...this.layout,
-      xaxis: { title: 'API-Spezifikation' },
-      yaxis: { title: 'Datenbankgröße (MB)' },
-      title: 'Datenbankgröße-Vergleich'
+      xaxis: {
+        ...this.layout.xaxis,
+        title: '<b>API-Spezifikation</b>'
+      },
+      yaxis: {
+        ...this.layout.yaxis,
+        title: '<b>Datenbankgröße (MB)</b>'
+      },
+      title: {
+        text: '<b>Datenbankgröße-Vergleich</b>',
+        font: { size: 16 }
+      }
     });
   }
 
@@ -697,9 +818,18 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
 
     Plotly.react('results-chart', traces, {
       ...this.layout,
-      xaxis: { title: 'API-Spezifikation' },
-      yaxis: { title: 'Anzahl Ergebnisse' },
-      title: 'Durchschnittliche Anzahl Ergebnisse'
+      xaxis: {
+        ...this.layout.xaxis,
+        title: '<b>API-Spezifikation</b>'
+      },
+      yaxis: {
+        ...this.layout.yaxis,
+        title: '<b>Anzahl Ergebnisse</b>'
+      },
+      title: {
+        text: '<b>Durchschnittliche Anzahl Ergebnisse</b>',
+        font: { size: 16 }
+      }
     });
   }
 

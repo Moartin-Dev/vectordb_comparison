@@ -51,7 +51,7 @@ services:
     ports:
       - "${CHROMA_HOST_IP}:${CHROMA_HOST_PORT}:8000"
     volumes:
-      - chroma-data:/chroma
+      - chroma-data:/data  # ChromaDB default persistence path
     networks:
       - benchnet
     # healthcheck:
@@ -121,6 +121,7 @@ services:
     volumes:
       - ./app:/app
       - ./benchmark:/benchmark
+      - chroma-data:/chroma-data:ro  # Read-only access to ChromaDB data (/data in chroma container)
 
   frontend:
     build:

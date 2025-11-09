@@ -43,19 +43,57 @@ def query(embedding: List[float], k: int = 5, where: Optional[dict] = None):
         query_params["where"] = where
     return _collection.query(**query_params)
 
+def get_directory_size(path: str) -> float:
+    """
+    Berechnet die Größe eines Verzeichnisses rekursiv in MB.
+
+    Args:
+        path: Pfad zum Verzeichnis
+
+    Returns:
+        Größe in MB (float)
+    """
+    total_size = 0
+    try:
+        for dirpath, dirnames, filenames in os.walk(path):
+            for filename in filenames:
+                filepath = os.path.join(dirpath, filename)
+                # Ignoriere Symlinks und nicht-existierende Dateien
+                if os.path.exists(filepath) and not os.path.islink(filepath):
+                    total_size += os.path.getsize(filepath)
+    except Exception as e:
+        print(f"Error calculating ChromaDB directory size: {e}")
+        return 0.0
+
+    return total_size / (1024 * 1024)  # Bytes zu MB
+
+def get_filesystem_size() -> float:
+    """
+    Gibt die aktuelle Dateisystemgröße des ChromaDB-Verzeichnisses zurück.
+    Wird für Differenzberechnungen verwendet (Größe nach - Größe vor Ingest).
+
+    Returns:
+        Größe in MB (float)
+    """
+    chroma_data_path = "/chroma-data"
+    if os.path.exists(chroma_data_path):
+        return get_directory_size(chroma_data_path)
+    else:
+        print(f"Warning: ChromaDB data path not found: {chroma_data_path}")
+        return 0.0
+
 def get_stats():
     """Gibt Statistiken über die ChromaDB-Collection zurück"""
     assert _collection is not None
     count = _collection.count()
 
-    # ChromaDB Größe ist schwierig zu messen ohne Dateisystem-Zugriff
-    # Schätzung basierend auf Dokumentenanzahl (grobe Näherung)
-    # Für genauere Messung müsste man das Datenverzeichnis checken
-    estimated_size_mb = count * 0.05  # Sehr grobe Schätzung: 50KB pro Dokument
+    # Für Stats-Endpoint: Verwende Filesystem-Größe
+    # (wird nicht für Benchmark-Differenzen verwendet)
+    chroma_size_mb = get_filesystem_size()
 
     return {
         "document_count": count,
-        "size_mb": round(estimated_size_mb, 2)
+        "size_mb": round(chroma_size_mb, 2)
     }
 
 def reset_collection():

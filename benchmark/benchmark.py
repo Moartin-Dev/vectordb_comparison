@@ -139,6 +139,14 @@ class VectorDBBenchmark:
             await self.reset_databases()
             await asyncio.sleep(1)  # Kurze Pause
 
+            # Measure ChromaDB filesystem size BEFORE ingest (baseline)
+            try:
+                stats_before = await self.get_db_stats()
+                chroma_size_before = stats_before.get("chroma_filesystem_mb", 0)
+            except Exception as e:
+                print(f"     ⚠️  Failed to get baseline ChromaDB size: {e}")
+                chroma_size_before = 0
+
             # Ingest
             print(f"  📤 Ingesting {api_name}...")
             try:
@@ -152,11 +160,19 @@ class VectorDBBenchmark:
                 continue
 
             # DB Stats nach Ingest
+            # - PG: Direkte Messung via SQL (pg_total_relation_size)
+            # - ChromaDB: Differenz der Filesystem-Größe (nach - vor)
             try:
-                stats = await self.get_db_stats()
-                db_size_pg = stats.get("pg_size_mb", 0)
-                db_size_chroma = stats.get("chroma_size_mb", 0)
-            except:
+                stats_after = await self.get_db_stats()
+                db_size_pg = stats_after.get("pg_size_mb", 0)
+
+                chroma_size_after = stats_after.get("chroma_filesystem_mb", 0)
+                db_size_chroma = chroma_size_after - chroma_size_before
+
+                print(f"     💾 DB Size - PG: {db_size_pg:.2f} MB, Chroma: {db_size_chroma:.2f} MB (delta)")
+                print(f"        ChromaDB filesystem: {chroma_size_before:.2f} MB → {chroma_size_after:.2f} MB")
+            except Exception as e:
+                print(f"     ⚠️  Failed to get DB stats: {e}")
                 db_size_pg = 0
                 db_size_chroma = 0
 
