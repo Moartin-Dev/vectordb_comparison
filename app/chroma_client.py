@@ -82,18 +82,55 @@ def get_filesystem_size() -> float:
         print(f"Warning: ChromaDB data path not found: {chroma_data_path}")
         return 0.0
 
+def get_collection_size_mb() -> float:
+    """
+    Berechnet die tatsächliche Größe der ChromaDB-Collection basierend auf
+    Anzahl Dokumente und Embedding-Dimensionen.
+
+    Berechnung:
+    - Embeddings: count × 384 dims × 4 bytes (float32) = count × 1,536 bytes
+    - Text-Dokumente: ~1,200 bytes (durchschnittliche Chunk-Größe)
+    - Metadaten (source, chunk_id): ~100 bytes
+    - SQLite Indizes und Overhead: ~30% zusätzlich
+
+    Insgesamt: count × (1,536 + 1,200 + 100) × 1.3 = count × ~3,700 bytes
+
+    Returns:
+        Größe in MB
+    """
+    assert _collection is not None
+    count = _collection.count()
+
+    if count == 0:
+        return 0.0
+
+    # Embedding-Größe: 384 dimensions × 4 bytes (float32)
+    embedding_size_bytes = 384 * 4  # 1,536 bytes
+
+    # Durchschnittliche Text-Größe pro Chunk (CHUNK_SIZE ist 1200 chars)
+    text_size_bytes = 1200  # ~1,200 bytes UTF-8
+
+    # Metadaten (source string, chunk_id int)
+    metadata_size_bytes = 100
+
+    # Basis-Größe
+    base_size_bytes = count * (embedding_size_bytes + text_size_bytes + metadata_size_bytes)
+
+    # SQLite Indizes und Overhead (~30%)
+    total_size_bytes = base_size_bytes * 1.3
+
+    # Konvertiere zu MB
+    return total_size_bytes / (1024 * 1024)
+
 def get_stats():
     """Gibt Statistiken über die ChromaDB-Collection zurück"""
     assert _collection is not None
     count = _collection.count()
-
-    # Für Stats-Endpoint: Verwende Filesystem-Größe
-    # (wird nicht für Benchmark-Differenzen verwendet)
-    chroma_size_mb = get_filesystem_size()
+    size_mb = get_collection_size_mb()
 
     return {
         "document_count": count,
-        "size_mb": round(chroma_size_mb, 2)
+        "size_mb": round(size_mb, 2)
     }
 
 def reset_collection():

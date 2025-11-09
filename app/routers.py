@@ -99,8 +99,7 @@ async def stats():
         "pg_document_count": pg_stats["document_count"],
         "pg_size_mb": pg_stats["size_mb"],
         "chroma_document_count": chroma_stats["document_count"],
-        "chroma_size_mb": chroma_stats["size_mb"],
-        "chroma_filesystem_mb": chroma_get_fs_size()  # Für Differenzberechnung
+        "chroma_size_mb": chroma_stats["size_mb"]
     }
 
 @router.post("/reset")
