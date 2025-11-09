@@ -28,10 +28,10 @@
           "estimated_loc": 21500
         },
          {
-          "name": "Jira Cloud API",
-          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/refs/heads/main/APIs/atlassian.com/jira/1001.0.0-SNAPSHOT/openapi.yaml",
-          "provider": "Atlassian",
-          "estimated_loc": 49300
+          "name": "Slack Web API",
+          "url": "https://raw.githubusercontent.com/slackapi/slack-api-specs/master/web-api/slack_web_openapi_v2.json",
+          "provider": "Slack",
+          "estimated_loc": 49500
         }
       ]
     },

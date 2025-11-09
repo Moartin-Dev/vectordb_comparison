@@ -44,7 +44,19 @@ def extract_text_from_openapi(raw: str) -> str:
     - Request/Response Bodies
     """
     try:
-        data = yaml.safe_load(raw)
+        # Versuche zuerst als JSON zu parsen (schneller und robuster)
+        import json
+        try:
+            data = json.loads(raw)
+        except (json.JSONDecodeError, ValueError):
+            # Falls JSON fehlschlägt, versuche YAML mit UnsafeLoader
+            # (UnsafeLoader kann mehr YAML-Features parsen, auch wenn sie nicht standard sind)
+            try:
+                data = yaml.load(raw, Loader=yaml.UnsafeLoader)
+            except Exception:
+                # Als letzter Versuch: FullLoader
+                data = yaml.load(raw, Loader=yaml.FullLoader)
+
         parts = []
 
         if not isinstance(data, dict):

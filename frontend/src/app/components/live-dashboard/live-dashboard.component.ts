@@ -233,6 +233,58 @@ interface DetailedPerformanceStats {
         </div>
       </div>
 
+      <!-- API Specs Analysis Table -->
+      <div class="mt-6 bg-white rounded-lg shadow-md p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-bold text-gray-800">
+            API-Spezifikationen Analyse
+          </h3>
+          <div class="flex gap-2">
+            <button
+              *ngIf="specsAnalysis.length > 0"
+              (click)="downloadSpecsAnalysisTable()"
+              class="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors">
+              Download PNG
+            </button>
+            <button
+              (click)="loadSpecsAnalysis()"
+              [disabled]="specsAnalysisLoading"
+              class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400">
+              {{ specsAnalysisLoading ? 'Lädt...' : specsAnalysis.length > 0 ? 'Neu laden' : 'Analyse laden' }}
+            </button>
+          </div>
+        </div>
+        <div *ngIf="specsAnalysis.length > 0" id="specs-analysis-table" class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-indigo-900">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-bold text-white uppercase">API</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">LOC</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Gesamte Chars</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Extrahierte Chars</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Extraktion (%)</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Chunks</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <tr *ngFor="let spec of specsAnalysis; let i = index"
+                  [ngClass]="{'bg-gray-50': i % 2 === 1, 'bg-white': i % 2 === 0}"
+                  class="hover:bg-blue-50">
+                <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ spec.api }}</td>
+                <td class="px-4 py-3 text-sm text-center text-gray-700">{{ spec.loc | number:'1.0-0' }}</td>
+                <td class="px-4 py-3 text-sm text-center text-gray-700">{{ spec.raw_chars | number:'1.0-0' }}</td>
+                <td class="px-4 py-3 text-sm text-center text-gray-700">{{ spec.extracted_chars | number:'1.0-0' }}</td>
+                <td class="px-4 py-3 text-sm text-center text-gray-700">{{ spec.extraction_ratio }}%</td>
+                <td class="px-4 py-3 text-sm text-center text-gray-700">{{ spec.num_chunks }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div *ngIf="specsAnalysis.length === 0 && !specsAnalysisLoading" class="text-center text-gray-500 py-4">
+          Klicken Sie auf "Analyse laden", um die API-Spezifikationen zu analysieren.
+        </div>
+      </div>
+
       <!-- Detailed Performance Statistics Table -->
       <div *ngIf="showStatisticalSummary() && detailedPerformanceStats.length > 0" class="mt-6 bg-white rounded-lg shadow-md p-6">
         <div class="flex justify-between items-center mb-4">
@@ -331,6 +383,10 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
   detailedPerformanceStats: DetailedPerformanceStats[] = [];
   benchmarkCompleted = false;
 
+  // API Specs Analysis
+  specsAnalysis: any[] = [];
+  specsAnalysisLoading = false;
+
   // Subscription für Cleanup
   private progressSubscription?: Subscription;
 
@@ -386,7 +442,7 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
     'Ably Platform API': 1275,
     'Apache Airflow Stable API': 4800,
     'Shutterstock API': 21500,
-    'Jira Cloud API': 49300,
+    'Slack Web API': 49500,
     'Stripe API': 150000,
     'GitHub REST API': 236000
   };
@@ -1090,6 +1146,59 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
       });
     } catch (error) {
       console.error('Failed to download performance table:', error);
+    }
+  }
+
+  /**
+   * Lädt die API-Spezifikationen-Analyse vom Backend
+   */
+  async loadSpecsAnalysis(): Promise<void> {
+    this.specsAnalysisLoading = true;
+    try {
+      const response = await fetch('http://localhost:8000/analyze-specs');
+      const data = await response.json();
+      this.specsAnalysis = data.specs || [];
+      console.log('Loaded specs analysis:', this.specsAnalysis);
+    } catch (error) {
+      console.error('Failed to load specs analysis:', error);
+      alert('Fehler beim Laden der API-Analyse. Siehe Console für Details.');
+    } finally {
+      this.specsAnalysisLoading = false;
+    }
+  }
+
+  /**
+   * Downloads the API specs analysis table as PNG using html2canvas
+   */
+  async downloadSpecsAnalysisTable(): Promise<void> {
+    const element = document.getElementById('specs-analysis-table');
+    if (!element) {
+      console.error('Specs analysis table element not found');
+      return;
+    }
+
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,  // Higher resolution
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+
+      // Convert canvas to blob and trigger download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'api_specs_analysis.png';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }
+      });
+    } catch (error) {
+      console.error('Failed to download specs analysis table:', error);
     }
   }
 }
