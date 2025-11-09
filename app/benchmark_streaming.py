@@ -7,6 +7,7 @@ import asyncio
 import json
 import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import AsyncGenerator, Dict, List
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -17,6 +18,43 @@ from log import logger
 active_benchmarks: Dict[str, Dict] = {}
 
 router = APIRouter(prefix="/benchmark", tags=["benchmark-streaming"])
+
+
+def count_apis_in_categories(categories: List[str]) -> int:
+    """
+    Count total number of APIs across specified categories
+
+    Args:
+        categories: List of category names (e.g., ["small", "medium"])
+
+    Returns:
+        Total number of APIs in those categories
+    """
+    specs_file = Path("/benchmark/api_specs_list.json")
+
+    if not specs_file.exists():
+        logger.warning(f"⚠️  API specs file not found at {specs_file}, returning 0")
+        return 0
+
+    try:
+        with open(specs_file, 'r') as f:
+            specs_data = json.load(f)
+
+        total_apis = 0
+        for category in categories:
+            if category in specs_data.get('categories', {}):
+                specs = specs_data['categories'][category].get('specs', [])
+                total_apis += len(specs)
+                logger.info(f"📊 Category '{category}': {len(specs)} APIs")
+            else:
+                logger.warning(f"⚠️  Category '{category}' not found in specs file")
+
+        logger.info(f"✅ Total APIs to benchmark: {total_apis}")
+        return total_apis
+
+    except Exception as e:
+        logger.error(f"❌ Error reading API specs file: {e}")
+        return 0
 
 
 class BenchmarkStartRequest(BaseModel):
@@ -42,6 +80,11 @@ async def start_benchmark(request: BenchmarkStartRequest):
     benchmark_id = str(uuid.uuid4())
     logger.info(f"🚀 Starting benchmark {benchmark_id}: {request.runs} runs, categories: {request.categories}")
 
+    # Calculate total expected runs: runs_per_spec × number_of_apis
+    api_count = count_apis_in_categories(request.categories)
+    total_runs = request.runs * api_count
+    logger.info(f"📊 Total expected runs: {request.runs} runs/API × {api_count} APIs = {total_runs} total runs")
+
     # Initialize benchmark state
     active_benchmarks[benchmark_id] = {
         "status": "running",
@@ -50,7 +93,7 @@ async def start_benchmark(request: BenchmarkStartRequest):
         "started_at": datetime.utcnow().isoformat(),
         "results": [],
         "current_progress": 0,
-        "total_runs": 0
+        "total_runs": total_runs
     }
 
     # Start benchmark in background
@@ -91,6 +134,7 @@ async def run_benchmark(benchmark_id: str, runs: int, categories: List[str]):
 
         cmd = [
             sys.executable,
+            "-u",  # Unbuffered stdout/stderr - WICHTIG für Echtzeit-Progress!
             benchmark_script,
             "--runs", str(runs),
             "--categories", *categories,
@@ -116,12 +160,44 @@ async def run_benchmark(benchmark_id: str, runs: int, categories: List[str]):
             line_str = line.decode().strip()
             logger.info(f"📝 [stdout] {line_str}")
 
-            # Parse progress from output
-            if "Run " in line_str:
-                # Extract run information and update progress
+            # Parse structured progress markers
+            # Format: [PROGRESS] phase|current_run|total_runs|sub_progress|message
+            if line_str.startswith("[PROGRESS]"):
+                try:
+                    # Parse: "[PROGRESS] phase|current_run|total_runs|sub_progress|message"
+                    parts = line_str[10:].strip().split("|", 4)  # Skip "[PROGRESS]"
+                    if len(parts) == 5:
+                        phase, current_run_str, total_runs_str, sub_progress_str, message = parts
+                        current_run = int(current_run_str)
+                        total_runs_int = int(total_runs_str)
+                        sub_progress = float(sub_progress_str)
+
+                        # Calculate overall progress: (completed_runs + sub_progress_of_current) / total_runs
+                        # completed_runs = current_run - 1 (da current_run noch läuft)
+                        # overall_progress = (current_run - 1 + sub_progress) / total_runs
+                        if total_runs_int > 0:
+                            overall_progress_pct = ((current_run - 1 + sub_progress) / total_runs_int) * 100
+                        else:
+                            overall_progress_pct = 0
+
+                        # Update state
+                        benchmark_state["current_progress"] = current_run
+                        benchmark_state["sub_progress"] = sub_progress
+                        benchmark_state["overall_progress_pct"] = round(overall_progress_pct, 1)
+                        benchmark_state["phase"] = phase
+                        benchmark_state["last_update"] = datetime.utcnow().isoformat()
+                        benchmark_state["last_message"] = message
+
+                        logger.info(f"✅ Progress: {current_run}/{total_runs_int} ({overall_progress_pct:.1f}%) - {phase} - {message}")
+                except Exception as e:
+                    logger.warning(f"⚠️  Failed to parse progress marker: {line_str} - Error: {e}")
+
+            # Fallback: Legacy marker for backward compatibility
+            elif "🔄 Run " in line_str:
                 benchmark_state["current_progress"] += 1
                 benchmark_state["last_update"] = datetime.utcnow().isoformat()
                 benchmark_state["last_message"] = line_str
+                logger.info(f"✅ Legacy progress updated: {benchmark_state['current_progress']}/{benchmark_state.get('total_runs', 0)}")
 
         # Wait for completion and capture stderr
         await process.wait()
@@ -202,6 +278,9 @@ async def stream_benchmark(benchmark_id: str):
     async def event_generator() -> AsyncGenerator[str, None]:
         """Generator that yields SSE events"""
         last_progress = -1
+        last_sub_progress = -1.0
+        last_message = ""
+        first_event = True
 
         while True:
             benchmark_state = active_benchmarks.get(benchmark_id)
@@ -209,20 +288,36 @@ async def stream_benchmark(benchmark_id: str):
             if not benchmark_state:
                 break
 
-            # Send update if progress changed
+            # Send update if progress or sub-progress changed
             current_progress = benchmark_state.get("current_progress", 0)
-            if current_progress != last_progress:
+            current_sub_progress = benchmark_state.get("sub_progress", 0.0)
+            current_message = benchmark_state.get("last_message", "")
+
+            # WICHTIG: Sende sofort den aktuellen State beim ersten Connect (auch wenn 0)
+            # oder wenn sich Progress, Sub-Progress oder Message geändert hat
+            if (first_event or
+                current_progress != last_progress or
+                current_sub_progress != last_sub_progress or
+                current_message != last_message):
+
+                first_event = False
+
                 data = {
                     "benchmark_id": benchmark_id,
                     "status": benchmark_state["status"],
                     "progress": current_progress,
                     "total": benchmark_state.get("total_runs", 0),
-                    "last_message": benchmark_state.get("last_message", ""),
+                    "sub_progress": current_sub_progress,
+                    "overall_progress_pct": benchmark_state.get("overall_progress_pct", 0),
+                    "phase": benchmark_state.get("phase", ""),
+                    "last_message": current_message,
                     "timestamp": datetime.utcnow().isoformat()
                 }
 
                 yield f"data: {json.dumps(data)}\n\n"
                 last_progress = current_progress
+                last_sub_progress = current_sub_progress
+                last_message = current_message
 
             # Check if completed
             if benchmark_state["status"] in ["completed", "failed"]:

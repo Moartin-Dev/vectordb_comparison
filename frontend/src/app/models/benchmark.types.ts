@@ -21,6 +21,9 @@ export interface BenchmarkProgress {
   status: 'running' | 'completed' | 'failed';
   progress: number;
   total: number;
+  sub_progress?: number;  // Progress within current run (0.0 - 1.0)
+  overall_progress_pct?: number;  // Overall progress percentage (0-100)
+  phase?: string;  // Current phase: run_start, reset, ingest, query, run_done
   last_message: string;
   timestamp: string;
   message?: string;  // Optional message field

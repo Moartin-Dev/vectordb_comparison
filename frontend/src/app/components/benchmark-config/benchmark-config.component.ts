@@ -199,6 +199,18 @@ export class BenchmarkConfigComponent implements OnInit, OnDestroy {
     this.benchmarkService.startBenchmark(this.config).subscribe({
       next: (response) => {
         this.statusMessage = response.message;
+
+        // WICHTIG: Sende sofort initialen Progress, damit UI sofort reagiert
+        this.benchmarkService.emitInitialProgress({
+          benchmark_id: response.benchmark_id,
+          status: 'running',
+          progress: 0,
+          total: 0,  // Wird vom Backend später aktualisiert
+          overall_progress_pct: 0,
+          last_message: 'Benchmark startet...',
+          timestamp: new Date().toISOString()
+        });
+
         // Verbinde zu SSE Stream für Live-Updates
         this.benchmarkService.connectToStream(response.benchmark_id);
       },

@@ -46,6 +46,8 @@ class VectorDBBenchmark:
         self.api_url = api_url
         self.runs_per_spec = runs_per_spec
         self.results: List[BenchmarkResult] = []
+        self.total_runs = 0  # Wird in run_all_benchmarks berechnet
+        self.current_run = 0  # Globaler Run-Counter
 
     async def fetch_spec(self, url: str) -> str:
         """Lädt eine OpenAPI-Spezifikation von URL"""
@@ -106,6 +108,22 @@ class VectorDBBenchmark:
         ]
         return base_queries
 
+    def emit_progress(self, phase: str, message: str, sub_progress: float = 0.0):
+        """
+        Gibt strukturierten Progress-Marker aus für SSE-Tracking
+
+        Format: [PROGRESS] phase|current_run|total_runs|sub_progress|message
+
+        Args:
+            phase: Phase-Bezeichner (run_start, reset, ingest, query, run_done)
+            message: Lesbare Nachricht für Frontend
+            sub_progress: Fortschritt innerhalb des aktuellen Runs (0.0-1.0)
+        """
+        print(f"[PROGRESS] {phase}|{self.current_run}|{self.total_runs}|{sub_progress:.2f}|{message}")
+        # Flush stdout to ensure immediate delivery
+        import sys
+        sys.stdout.flush()
+
     async def run_benchmark_for_spec(self, spec_info: Dict[str, Any], category: str):
         """Führt vollständigen Benchmark für eine API-Spec durch"""
         api_name = spec_info["name"]
@@ -132,10 +150,13 @@ class VectorDBBenchmark:
 
         # Mehrere Durchläufe
         for run in range(1, self.runs_per_spec + 1):
-            print(f"\n🔄 Run {run}/{self.runs_per_spec}")
+            self.current_run += 1
+            print(f"\n🔄 Run {run}/{self.runs_per_spec}", flush=True)
+            self.emit_progress("run_start", f"🔄 Starting Run {self.current_run}/{self.total_runs}", 0.0)
 
             # Datenbanken zurücksetzen für saubere Messung
-            print("  🗑️  Resetting databases...")
+            print("  🗑️  Resetting databases...", flush=True)
+            self.emit_progress("reset", f"🗑️  Resetting databases (Run {self.current_run}/{self.total_runs})", 0.10)
             await self.reset_databases()
             await asyncio.sleep(1)  # Kurze Pause
 
@@ -148,13 +169,15 @@ class VectorDBBenchmark:
                 chroma_size_before = 0
 
             # Ingest
-            print(f"  📤 Ingesting {api_name}...")
+            print(f"  📤 Ingesting {api_name}...", flush=True)
+            self.emit_progress("ingest", f"📤 Ingesting {api_name} (Run {self.current_run}/{self.total_runs})", 0.20)
             try:
                 ingest_result = await self.ingest_spec(api_name, spec_text)
-                print(f"     ✅ Ingested {ingest_result['num_chunks']} chunks")
-                print(f"     ⏱️  Embed: {ingest_result['embed_ms']:.2f}ms")
-                print(f"     ⏱️  PG Write: {ingest_result['pg_write_ms']:.2f}ms")
-                print(f"     ⏱️  Chroma Write: {ingest_result['chroma_write_ms']:.2f}ms")
+                print(f"     ✅ Ingested {ingest_result['num_chunks']} chunks", flush=True)
+                print(f"     ⏱️  Embed: {ingest_result['embed_ms']:.2f}ms", flush=True)
+                print(f"     ⏱️  PG Write: {ingest_result['pg_write_ms']:.2f}ms", flush=True)
+                print(f"     ⏱️  Chroma Write: {ingest_result['chroma_write_ms']:.2f}ms", flush=True)
+                self.emit_progress("ingest_done", f"✅ Ingest complete (Run {self.current_run}/{self.total_runs})", 0.40)
             except Exception as e:
                 print(f"     ❌ Ingest failed: {e}")
                 continue
@@ -177,8 +200,12 @@ class VectorDBBenchmark:
                 db_size_chroma = 0
 
             # Queries durchführen
-            for query_text in queries:
-                print(f"  🔍 Querying: '{query_text[:50]}...'")
+            num_queries = len(queries)
+            for query_idx, query_text in enumerate(queries, 1):
+                # Berechne Progress: 40% für Ingest, 60% für Queries gleichmäßig verteilt
+                query_progress = 0.40 + (query_idx / num_queries * 0.60)
+                print(f"  🔍 Querying: '{query_text[:50]}...'", flush=True)
+                self.emit_progress("query", f"🔍 Query {query_idx}/{num_queries}: {query_text[:40]}... (Run {self.current_run}/{self.total_runs})", query_progress)
                 try:
                     query_result = await self.query_spec(query_text, k=5)
 
@@ -211,6 +238,9 @@ class VectorDBBenchmark:
                     print(f"     ❌ Query failed: {e}")
                     continue
 
+            # Run abgeschlossen
+            self.emit_progress("run_done", f"✅ Run {self.current_run}/{self.total_runs} complete", 1.0)
+
             # Kurze Pause zwischen Runs
             if run < self.runs_per_spec:
                 await asyncio.sleep(2)
@@ -228,6 +258,14 @@ class VectorDBBenchmark:
         # Kategorien filtern
         if categories is None:
             categories = list(specs_data['categories'].keys())
+
+        # Berechne total_runs für Progress-Tracking
+        total_apis = 0
+        for category in categories:
+            if category in specs_data['categories']:
+                total_apis += len(specs_data['categories'][category]['specs'])
+        self.total_runs = self.runs_per_spec * total_apis
+        print(f"📊 Total runs planned: {self.runs_per_spec} runs/API × {total_apis} APIs = {self.total_runs} runs")
 
         # Für jede Kategorie
         for category in categories:

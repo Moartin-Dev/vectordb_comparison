@@ -57,6 +57,14 @@ export class BenchmarkService {
   }
 
   /**
+   * Emittiert initialen Progress-State sofort nach Benchmark-Start
+   * Verhindert Race Condition zwischen SSE-Connect und ersten Updates
+   */
+  emitInitialProgress(progress: BenchmarkProgress): void {
+    this.progressSubject.next(progress);
+  }
+
+  /**
    * Verbindet zu SSE Stream für Live-Updates
    *
    * EventSource API:

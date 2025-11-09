@@ -59,11 +59,16 @@ interface DetailedPerformanceStats {
 
         <div class="flex justify-between text-sm text-gray-600">
           <span>{{ currentProgress.progress }} / {{ currentProgress.total }}</span>
-          <span>{{ progressPercent | number:'1.0-0' }}%</span>
+          <span>{{ currentProgress.overall_progress_pct !== undefined ? (currentProgress.overall_progress_pct | number:'1.1-1') : (progressPercent | number:'1.0-0') }}%</span>
         </div>
 
-        <p class="mt-2 text-sm text-gray-700">
+        <p class="mt-2 text-sm text-gray-700 font-medium">
           {{ currentProgress.last_message }}
+        </p>
+
+        <!-- Phase Indicator (optional) -->
+        <p *ngIf="currentProgress.phase" class="mt-1 text-xs text-gray-500 italic">
+          Phase: {{ currentProgress.phase }}
         </p>
 
         <div class="mt-4">
@@ -416,12 +421,18 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
     this.isActive = true;
     this.currentProgress = progress;
 
-    if (progress.total > 0) {
+    // Use overall_progress_pct if available (granular), otherwise calculate from progress/total
+    if (progress.overall_progress_pct !== undefined) {
+      this.progressPercent = progress.overall_progress_pct;
+    } else if (progress.total > 0) {
       this.progressPercent = (progress.progress / progress.total) * 100;
     }
 
     // Update Charts mit aktuellen Daten
     this.updateCharts();
+
+    // WICHTIG: Trigger Change Detection manuell, da SSE außerhalb von Angular Zone läuft
+    this.cdr.detectChanges();
 
     // Bei Completion - hole Results via HTTP
     if (progress.status === 'completed' && progress.benchmark_id) {
