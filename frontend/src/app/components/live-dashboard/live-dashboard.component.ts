@@ -26,6 +26,19 @@ import html2canvas from 'html2canvas';
 // Plotly.js Import
 declare const Plotly: any;
 
+// Detailed Performance Statistics Interface
+interface DetailedPerformanceStats {
+  api: string;  // z.B. "Petstore"
+  implementation: string;  // z.B. "PG Ingest", "Chroma Query"
+  min: number;
+  max: number;
+  mean: number;
+  percentile_25: number;
+  median: number;
+  percentile_75: number;
+  iqr: number;
+}
+
 @Component({
   selector: 'app-live-dashboard',
   standalone: true,
@@ -215,6 +228,52 @@ declare const Plotly: any;
         </div>
       </div>
 
+      <!-- Detailed Performance Statistics Table -->
+      <div *ngIf="showStatisticalSummary() && detailedPerformanceStats.length > 0" class="mt-6 bg-white rounded-lg shadow-md p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-bold text-gray-800">
+            Detaillierte Performance-Statistiken
+          </h3>
+          <button
+            (click)="downloadPerformanceTable()"
+            class="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors">
+            Download PNG
+          </button>
+        </div>
+        <div id="performance-stats-table" class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-indigo-900">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-bold text-white uppercase">API</th>
+                <th class="px-4 py-3 text-left text-xs font-bold text-white uppercase">Implementation</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Min (ms)</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Max (ms)</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Mean (ms)</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">25<sup>th</sup> Percentile (ms)</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Median (ms)</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">75<sup>th</sup> Percentile (ms)</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Inter-quartile range (ms)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <tr *ngFor="let stat of detailedPerformanceStats; let i = index"
+                  [ngClass]="{'bg-gray-50': i % 2 === 1, 'bg-white': i % 2 === 0}"
+                  class="hover:bg-blue-50">
+                <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ stat.api }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">{{ stat.implementation }}</td>
+                <td class="px-4 py-3 text-sm text-center text-gray-700">{{ stat.min | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-sm text-center text-gray-700">{{ stat.max | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-sm text-center text-gray-700">{{ stat.mean | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-sm text-center text-gray-700">{{ stat.percentile_25 | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-sm text-center font-bold text-gray-900">{{ stat.median | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-sm text-center text-gray-700">{{ stat.percentile_75 | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-sm text-center text-gray-700">{{ stat.iqr | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Live Stats Table (recent runs) -->
       <div *ngIf="results.length > 0" class="mt-6 bg-white rounded-lg shadow-md p-6">
         <h3 class="text-lg font-bold mb-4 text-gray-800">
@@ -264,6 +323,7 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
   results: BenchmarkResult[] = [];
   progressPercent = 0;
   statisticalSummary: any[] = [];
+  detailedPerformanceStats: DetailedPerformanceStats[] = [];
   benchmarkCompleted = false;
 
   // Subscription für Cleanup
@@ -449,10 +509,101 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
     });
 
     console.log('Statistical summary calculated:', this.statisticalSummary);
+
+    // Berechne detaillierte Performance-Statistiken pro API
+    this.detailedPerformanceStats = [];
+
+    Array.from(grouped.entries()).forEach(([apiName, apiResults]) => {
+      const pgIngestValues = apiResults.map(r => r.pg_write_ms);
+      const chromaIngestValues = apiResults.map(r => r.chroma_write_ms);
+      const pgQueryValues = apiResults.map(r => r.pg_query_ms);
+      const chromaQueryValues = apiResults.map(r => r.chroma_query_ms);
+
+      // Füge 4 Zeilen pro API hinzu (PG Ingest, Chroma Ingest, PG Query, Chroma Query)
+      this.detailedPerformanceStats.push(
+        {
+          api: apiName,
+          implementation: 'PG Ingest',
+          min: this.min(pgIngestValues),
+          max: this.max(pgIngestValues),
+          mean: this.mean(pgIngestValues),
+          percentile_25: this.percentile(pgIngestValues, 25),
+          median: this.median(pgIngestValues),
+          percentile_75: this.percentile(pgIngestValues, 75),
+          iqr: this.iqr(pgIngestValues)
+        },
+        {
+          api: apiName,
+          implementation: 'Chroma Ingest',
+          min: this.min(chromaIngestValues),
+          max: this.max(chromaIngestValues),
+          mean: this.mean(chromaIngestValues),
+          percentile_25: this.percentile(chromaIngestValues, 25),
+          median: this.median(chromaIngestValues),
+          percentile_75: this.percentile(chromaIngestValues, 75),
+          iqr: this.iqr(chromaIngestValues)
+        },
+        {
+          api: apiName,
+          implementation: 'PG Query',
+          min: this.min(pgQueryValues),
+          max: this.max(pgQueryValues),
+          mean: this.mean(pgQueryValues),
+          percentile_25: this.percentile(pgQueryValues, 25),
+          median: this.median(pgQueryValues),
+          percentile_75: this.percentile(pgQueryValues, 75),
+          iqr: this.iqr(pgQueryValues)
+        },
+        {
+          api: apiName,
+          implementation: 'Chroma Query',
+          min: this.min(chromaQueryValues),
+          max: this.max(chromaQueryValues),
+          mean: this.mean(chromaQueryValues),
+          percentile_25: this.percentile(chromaQueryValues, 25),
+          median: this.median(chromaQueryValues),
+          percentile_75: this.percentile(chromaQueryValues, 75),
+          iqr: this.iqr(chromaQueryValues)
+        }
+      );
+    });
+
+    console.log('Detailed performance stats calculated:', this.detailedPerformanceStats);
   }
 
   private mean(values: number[]): number {
     return values.reduce((sum, val) => sum + val, 0) / values.length;
+  }
+
+  private median(values: number[]): number {
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 0
+      ? (sorted[mid - 1] + sorted[mid]) / 2
+      : sorted[mid];
+  }
+
+  private percentile(values: number[], p: number): number {
+    const sorted = [...values].sort((a, b) => a - b);
+    const index = (p / 100) * (sorted.length - 1);
+    const lower = Math.floor(index);
+    const upper = Math.ceil(index);
+    const weight = index - lower;
+    return sorted[lower] * (1 - weight) + sorted[upper] * weight;
+  }
+
+  private min(values: number[]): number {
+    return Math.min(...values);
+  }
+
+  private max(values: number[]): number {
+    return Math.max(...values);
+  }
+
+  private iqr(values: number[]): number {
+    const q25 = this.percentile(values, 25);
+    const q75 = this.percentile(values, 75);
+    return q75 - q25;
   }
 
   private std(values: number[]): number {
@@ -463,9 +614,9 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
   }
 
   private formatStat(values: number[]): string {
-    const avg = this.mean(values);
-    const stdDev = this.std(values);
-    return `${avg.toFixed(1)} ± ${stdDev.toFixed(1)}`;
+    const med = this.median(values);
+    const iqrValue = this.iqr(values);
+    return `${med.toFixed(1)} ± ${iqrValue.toFixed(1)}`;
   }
 
   initCharts(): void {
@@ -778,8 +929,26 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
     const chromaData = apis.map(api => grouped.get(api)![0].db_size_chroma_mb);
 
     const traces = [
-      { x: apis, y: pgData, type: 'bar', name: 'PgVector', marker: { color: this.colors.pgvector } },
-      { x: apis, y: chromaData, type: 'bar', name: 'ChromaDB', marker: { color: this.colors.chromadb } }
+      {
+        x: apis,
+        y: pgData,
+        type: 'bar',
+        name: 'PgVector',
+        marker: { color: this.colors.pgvector },
+        text: pgData.map(val => val.toFixed(2)),
+        textposition: 'outside',
+        textfont: { size: 12 }
+      },
+      {
+        x: apis,
+        y: chromaData,
+        type: 'bar',
+        name: 'ChromaDB',
+        marker: { color: this.colors.chromadb },
+        text: chromaData.map(val => val.toFixed(2)),
+        textposition: 'outside',
+        textfont: { size: 12 }
+      }
     ];
 
     Plotly.react('size-chart', traces, {
@@ -879,6 +1048,38 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
       });
     } catch (error) {
       console.error('Failed to download table:', error);
+    }
+  }
+
+  async downloadPerformanceTable(): Promise<void> {
+    const element = document.getElementById('performance-stats-table');
+    if (!element) {
+      console.error('Performance stats table element not found');
+      return;
+    }
+
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,  // Higher resolution
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+
+      // Convert canvas to blob and trigger download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'detailed_performance_stats.png';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }
+      });
+    } catch (error) {
+      console.error('Failed to download performance table:', error);
     }
   }
 }
