@@ -10,6 +10,7 @@ import seaborn as sns
 from pathlib import Path
 import argparse
 import numpy as np
+import json
 
 
 class BenchmarkVisualizer:
@@ -25,6 +26,9 @@ class BenchmarkVisualizer:
         self.df = pd.read_csv(csv_file)
         print(f"✅ Loaded {len(self.df)} records")
 
+        # LOC-Mapping aus api_specs_list.json laden
+        self.loc_mapping = self._load_loc_mapping()
+
         # Seaborn Style
         sns.set_theme(style="whitegrid")
         plt.rcParams['figure.figsize'] = (12, 6)
@@ -36,6 +40,29 @@ class BenchmarkVisualizer:
             'ChromaDB': '#ff7f0e'   # Orange
         }
         self.palette = [self.db_colors['PgVector'], self.db_colors['ChromaDB']]
+
+    def _load_loc_mapping(self):
+        """Lädt LOC-Informationen aus api_specs_list.json"""
+        specs_file = self.csv_file.parent / 'api_specs_list.json'
+        if not specs_file.exists():
+            print(f"   ⚠️  api_specs_list.json not found at {specs_file}, LOC will be 0")
+            return {}
+
+        try:
+            with open(specs_file, 'r') as f:
+                specs_data = json.load(f)
+
+            # Mapping erstellen: API-Name -> LOC
+            loc_map = {}
+            for category_data in specs_data['categories'].values():
+                for spec in category_data['specs']:
+                    loc_map[spec['name']] = spec.get('estimated_loc', 0)
+
+            print(f"   ✅ Loaded LOC data for {len(loc_map)} APIs")
+            return loc_map
+        except Exception as e:
+            print(f"   ⚠️  Failed to load LOC data: {e}")
+            return {}
 
     def create_ingest_comparison(self):
         """Vergleicht Ingest-Performance zwischen PgVector und ChromaDB"""
@@ -292,13 +319,16 @@ class BenchmarkVisualizer:
 
             summary_data.append({
                 'API': api_name,
-                'Category': api_df['api_category'].iloc[0],
-                'Runs (N)': len(api_df),
-                'Chunks (avg)': api_df['num_chunks'].mean(),
-                'PG Ingest (ms)': f"{api_df['pg_write_ms'].mean():.1f} ± {api_df['pg_write_ms'].std():.1f}",
-                'Chroma Ingest (ms)': f"{api_df['chroma_write_ms'].mean():.1f} ± {api_df['chroma_write_ms'].std():.1f}",
-                'PG Query (ms)': f"{api_df['pg_query_ms'].mean():.1f} ± {api_df['pg_query_ms'].std():.1f}",
-                'Chroma Query (ms)': f"{api_df['chroma_query_ms'].mean():.1f} ± {api_df['chroma_query_ms'].std():.1f}",
+                'CATEGORY': api_df['api_category'].iloc[0],
+                'LOC': self.loc_mapping.get(api_name, 0),
+                'RUNS (N)': len(api_df),
+                'CHUNKS (AVG)': int(api_df['num_chunks'].mean()),
+                'PG INGEST (MS)': f"{api_df['pg_write_ms'].mean():.1f} ± {api_df['pg_write_ms'].std():.1f}",
+                'CHROMA INGEST (MS)': f"{api_df['chroma_write_ms'].mean():.1f} ± {api_df['chroma_write_ms'].std():.1f}",
+                'PG QUERY (MS)': f"{api_df['pg_query_ms'].mean():.1f} ± {api_df['pg_query_ms'].std():.1f}",
+                'CHROMA QUERY (MS)': f"{api_df['chroma_query_ms'].mean():.1f} ± {api_df['chroma_query_ms'].std():.1f}",
+                'PG SIZE (MB)': f"{api_df['db_size_pg_mb'].iloc[0]:.2f}",
+                'CHROMA SIZE (MB)': f"{api_df['db_size_chroma_mb'].iloc[0]:.2f}",
             })
 
         summary_df = pd.DataFrame(summary_data)
@@ -320,21 +350,26 @@ class BenchmarkVisualizer:
         table.set_fontsize(10)
         table.scale(1, 2.5)
 
-        # Automatische Spaltenbreite nur für bestimmte Spalten
-        # Nicht für die sehr kurzen Spalten wie Runs (N), Category, Chunks
+        # Automatische Spaltenbreite nur für lange Spalten (Ingest/Query mit ±)
         long_cols = [i for i, col in enumerate(summary_df.columns)
-                     if col not in ['Runs (N)', 'Category', 'Chunks (avg)']]
+                     if 'INGEST' in col or 'QUERY' in col]
         if long_cols:
             table.auto_set_column_width(col=long_cols)
 
-        # Setze fixe Breite für kurze Spalten (breiter als auto)
-        fixed_width = 0.15  # Feste Breite für Runs (N), Category, Chunks
-        short_cols = ['Runs (N)', 'Category', 'Chunks (avg)']
-        for col_name in short_cols:
+        # Setze fixe Breite für kurze/mittlere Spalten
+        col_widths = {
+            'CATEGORY': 0.10,
+            'LOC': 0.08,
+            'RUNS (N)': 0.08,
+            'CHUNKS (AVG)': 0.10,
+            'PG SIZE (MB)': 0.10,
+            'CHROMA SIZE (MB)': 0.12
+        }
+        for col_name, width in col_widths.items():
             if col_name in summary_df.columns:
                 col_idx = list(summary_df.columns).index(col_name)
                 for j in range(len(summary_df) + 1):  # +1 für Header
-                    table[(j, col_idx)].set_width(fixed_width)
+                    table[(j, col_idx)].set_width(width)
 
         # Header-Style
         for i in range(len(summary_df.columns)):

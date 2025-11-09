@@ -383,11 +383,10 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
 
   // LOC Mapping basierend auf api_specs_list.json
   private readonly apiLocMapping: Record<string, number> = {
-    'Petstore': 830,
-    'AbstractAPI Geolocation': 200,
-    'OpenAI API': 3500,
-    'Salesloft.com API': 9900,
-    'Spotify Web API': 7200,
+    'Ably Platform API': 1275,
+    'Apache Airflow Stable API': 4800,
+    'Shutterstock API': 21500,
+    'Jira Cloud API': 49300,
     'Stripe API': 150000,
     'GitHub REST API': 236000
   };

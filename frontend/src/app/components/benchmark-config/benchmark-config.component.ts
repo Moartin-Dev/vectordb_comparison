@@ -70,7 +70,7 @@ import { BenchmarkConfig } from '../../models/benchmark.types';
                   [disabled]="isRunning"
                   class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                 />
-                <span class="text-gray-700">Small (< 1000 LOC)</span>
+                <span class="text-gray-700">Small (< 5000 LOC)</span>
               </label>
               <label class="flex items-center space-x-2 cursor-pointer">
                 <input
@@ -79,7 +79,7 @@ import { BenchmarkConfig } from '../../models/benchmark.types';
                   [disabled]="isRunning"
                   class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                 />
-                <span class="text-gray-700">Medium (1000-10000 LOC)</span>
+                <span class="text-gray-700">Medium (5000-100000 LOC)</span>
               </label>
               <label class="flex items-center space-x-2 cursor-pointer">
                 <input
@@ -88,7 +88,7 @@ import { BenchmarkConfig } from '../../models/benchmark.types';
                   [disabled]="isRunning"
                   class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                 />
-                <span class="text-gray-700">Large (> 10000 LOC)</span>
+                <span class="text-gray-700">Large (> 100000 LOC)</span>
               </label>
             </div>
           </div>

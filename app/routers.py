@@ -6,6 +6,7 @@ from utils import extract_text_from_openapi, chunk_text, now_ms
 from embeddings import ollama_embed
 from db_pg import replace_source as pg_replace, query_topk as pg_query, get_stats as pg_get_stats, reset_database as pg_reset
 from chroma_client import upsert_source as chroma_upsert, query as chroma_query, get_stats as chroma_get_stats, reset_collection as chroma_reset, get_filesystem_size as chroma_get_fs_size
+from log import logger
 
 
 router = APIRouter()
@@ -36,6 +37,7 @@ async def ingest(req: IngestRequest):
     if not chunks:
         raise HTTPException(400, "No text to ingest after parsing/chunking.")
 
+    logger.info(f"Embedding {len(chunks)} chunks for '{req.source}'...")
     t0 = now_ms()
     embeds = await ollama_embed(chunks)
     t_embed = now_ms() - t0
@@ -56,6 +58,7 @@ async def ingest(req: IngestRequest):
 
 @router.post("/query")
 async def query(req: QueryRequest):
+    logger.info(f"Embedding query text (length={len(req.text)})...")
     t0 = now_ms()
     qvec = (await ollama_embed([req.text]))[0]
     t_embed = now_ms() - t0

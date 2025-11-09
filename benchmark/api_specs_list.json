@@ -2,47 +2,41 @@
   "description": "Kuratierte Liste von OpenAPI-Spezifikationen für Benchmark-Tests",
   "categories": {
     "small": {
-      "description": "Kleine APIs (< 1000 LOC)",
+      "description": "Kleine APIs (< 5000 LOC)",
       "specs": [
         {
-          "name": "Petstore",
-          "url": "https://petstore3.swagger.io/api/v3/openapi.yaml",
-          "provider": "Swagger",
-          "estimated_loc": 830
+          "name": "Ably Platform API",
+          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/refs/heads/main/APIs/ably.io/platform/1.1.0/openapi.yaml",
+          "provider": "Ably Support",
+          "estimated_loc": 1275
         },
         {
-          "name": "AbstractAPI Geolocation",
-          "url": "https://api.apis.guru/v2/specs/abstractapi.com/geolocation/1.0.0/openapi.json",
-          "provider": "AbstractAPI",
-          "estimated_loc": 200
+          "name": "Apache Airflow Stable API",
+          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/refs/heads/main/APIs/apache.org/airflow/2.5.3/openapi.yaml",
+          "provider": "Apache.org",
+          "estimated_loc": 4800
         }
       ]
     },
     "medium": {
-      "description": "Mittelgroße APIs (1000-10000 LOC)",
+      "description": "Mittelgroße APIs (5000-100000 LOC)",
       "specs": [
         {
-          "name": "OpenAI API",
-          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/refs/heads/main/APIs/openai.com/1.2.0/openapi.yaml",
-          "provider": "OpenAI",
-          "estimated_loc": 3500
+          "name": "Shutterstock API",
+          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/refs/heads/main/APIs/shutterstock.com/1.1.32/openapi.yaml",
+          "provider": "Shutterstock",
+          "estimated_loc": 21500
         },
          {
-          "name": "Salesloft.com API",
-          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/refs/heads/main/APIs/salesloft.com/v2/openapi.yaml",
-          "provider": "SalesLoft",
-          "estimated_loc": 9900
-        },
-        {
-          "name": "Spotify Web API",
-          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/refs/heads/main/APIs/spotify.com/1.0.0/openapi.yaml",
-          "provider": "Spotify",
-          "estimated_loc": 7200
+          "name": "Jira Cloud API",
+          "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/refs/heads/main/APIs/atlassian.com/jira/1001.0.0-SNAPSHOT/openapi.yaml",
+          "provider": "Atlassian",
+          "estimated_loc": 49300
         }
       ]
     },
     "large": {
-      "description": "Große APIs (> 10000 LOC)",
+      "description": "Große APIs (> 100000 LOC)",
       "specs": [
         {
           "name": "Stripe API",
