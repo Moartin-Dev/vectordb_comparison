@@ -31,7 +31,10 @@ async def ollama_embed(texts: List[str], max_retries: int = 5) -> List[List[floa
                     payload = {
                         "model": EMBEDDING_MODEL,
                         "input": batch,  # Ollama unterstützt Liste von Strings
-                        "keep_alive": "10m"
+                        "keep_alive": "10m",
+                        "options": {
+                            "num_ctx": 512  # Erhöht von default 256 auf 512 für längere Texte
+                        }
                     }
 
                     r = await client.post(url, json=payload)

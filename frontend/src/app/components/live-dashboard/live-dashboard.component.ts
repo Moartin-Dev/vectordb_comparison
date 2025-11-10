@@ -204,10 +204,10 @@ interface DetailedPerformanceStats {
                 <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">LOC</th>
                 <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Runs (N)</th>
                 <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Chunks (avg)</th>
-                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">PG Ingest (ms)</th>
-                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Chroma Ingest (ms)</th>
-                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">PG Query (ms)</th>
-                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Chroma Query (ms)</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">PG Ingest Total (ms)</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Chroma Ingest Total (ms)</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">PG Query per Search (ms)</th>
+                <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Chroma Query per Search (ms)</th>
                 <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">PG Size (MB)</th>
                 <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase">Chroma Size (MB)</th>
               </tr>
@@ -697,7 +697,7 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
       },
       yaxis: {
         ...this.layout.yaxis,
-        title: '<b>Zeit (ms)</b>'
+        title: '<b>Gesamtschreibzeit für alle Chunks (ms)</b>'
       },
       title: {
         text: '<b>Ingest Performance</b>',
@@ -713,7 +713,7 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
       },
       yaxis: {
         ...this.layout.yaxis,
-        title: '<b>Zeit (ms)</b>'
+        title: '<b>Abfragezeit pro Query (ms)</b>'
       },
       title: {
         text: '<b>Query Performance</b>',
@@ -844,7 +844,7 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
       ...this.layout,
       yaxis: {
         ...this.layout.yaxis,
-        title: '<b>Schreibzeit (ms)</b>'
+        title: '<b>Gesamtschreibzeit für alle Chunks (ms)</b>'
       },
       title: {
         text: '<b>Ingest Performance (Boxplot)</b>',
@@ -890,7 +890,7 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
       ...this.layout,
       yaxis: {
         ...this.layout.yaxis,
-        title: '<b>Schreibzeit (ms)</b>'
+        title: '<b>Gesamtschreibzeit für alle Chunks (ms)</b>'
       },
       title: {
         text: '<b>Ingest Performance (Violin Plot)</b>',
@@ -932,7 +932,7 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
       ...this.layout,
       yaxis: {
         ...this.layout.yaxis,
-        title: '<b>Abfragezeit (ms)</b>'
+        title: '<b>Abfragezeit pro Query (ms)</b>'
       },
       title: {
         text: '<b>Query Performance (Boxplot)</b>',
@@ -978,7 +978,7 @@ export class LiveDashboardComponent implements OnInit, OnDestroy {
       ...this.layout,
       yaxis: {
         ...this.layout.yaxis,
-        title: '<b>Abfragezeit (ms)</b>'
+        title: '<b>Abfragezeit pro Query (ms)</b>'
       },
       title: {
         text: '<b>Query Performance (Violin Plot)</b>',

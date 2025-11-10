@@ -99,7 +99,7 @@ class BenchmarkVisualizer:
         )
         axes[0].set_title('Ingest-Performance-Vergleich (Boxplot)')
         axes[0].set_xlabel('API-Spezifikation')
-        axes[0].set_ylabel('Schreibzeit (ms)')
+        axes[0].set_ylabel('Gesamtschreibzeit für alle Chunks (ms)')
         axes[0].tick_params(axis='x', rotation=45)
         axes[0].legend(title='Datenbank')
 
@@ -115,7 +115,7 @@ class BenchmarkVisualizer:
         )
         axes[1].set_title('Durchschnittliche Ingest-Performance')
         axes[1].set_xlabel('API-Spezifikation')
-        axes[1].set_ylabel('Durchschnittliche Schreibzeit (ms)')
+        axes[1].set_ylabel('Durchschn. Gesamtschreibzeit (ms)')
         axes[1].tick_params(axis='x', rotation=45)
         axes[1].legend(title='Datenbank')
 
@@ -160,7 +160,7 @@ class BenchmarkVisualizer:
         )
         axes[0].set_title('Query-Performance-Vergleich (Boxplot)')
         axes[0].set_xlabel('API-Spezifikation')
-        axes[0].set_ylabel('Abfragezeit (ms)')
+        axes[0].set_ylabel('Abfragezeit pro Query (ms)')
         axes[0].tick_params(axis='x', rotation=45)
         axes[0].legend(title='Datenbank')
 
@@ -176,7 +176,7 @@ class BenchmarkVisualizer:
         )
         axes[1].set_title('Query-Performance-Verteilung (Violin Plot)')
         axes[1].set_xlabel('API-Spezifikation')
-        axes[1].set_ylabel('Abfragezeit (ms)')
+        axes[1].set_ylabel('Abfragezeit pro Query (ms)')
         axes[1].tick_params(axis='x', rotation=45)
         axes[1].legend(title='Datenbank')
 
@@ -221,7 +221,7 @@ class BenchmarkVisualizer:
         )
         axes[0, 0].set_title('Ingest-Zeit nach API-Kategorie')
         axes[0, 0].set_xlabel('Kategorie')
-        axes[0, 0].set_ylabel('Schreibzeit (ms)')
+        axes[0, 0].set_ylabel('Gesamtschreibzeit (ms)')
         axes[0, 0].legend(title='Datenbank')
 
         # 2. Query Time by Category
@@ -250,7 +250,7 @@ class BenchmarkVisualizer:
         )
         axes[0, 1].set_title('Query-Zeit nach API-Kategorie')
         axes[0, 1].set_xlabel('Kategorie')
-        axes[0, 1].set_ylabel('Abfragezeit (ms)')
+        axes[0, 1].set_ylabel('Abfragezeit pro Query (ms)')
         axes[0, 1].legend(title='Datenbank')
 
         # 3. Chunks vs Ingest Time
@@ -272,7 +272,7 @@ class BenchmarkVisualizer:
         )
         axes[1, 0].set_title('Ingest-Zeit vs. Anzahl Chunks')
         axes[1, 0].set_xlabel('Anzahl Chunks')
-        axes[1, 0].set_ylabel('Schreibzeit (ms)')
+        axes[1, 0].set_ylabel('Gesamtschreibzeit (ms)')
         axes[1, 0].legend()
         axes[1, 0].grid(True, alpha=0.3)
 

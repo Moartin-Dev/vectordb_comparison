@@ -29,5 +29,7 @@ CHROMA_COLLECTION = os.getenv("CHROMA_COLLECTION", "apispecs")
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1200"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "150"))
 
-# PG index
-PG_IVFFLAT_LISTS = int(os.getenv("PG_IVFFLAT_LISTS", "100"))
+# PG HNSW index (matched to ChromaDB defaults for fair comparison)
+PG_HNSW_M = int(os.getenv("PG_HNSW_M", "16"))  # max connections per layer (ChromaDB: max_neighbors=16)
+PG_HNSW_EF_CONSTRUCTION = int(os.getenv("PG_HNSW_EF_CONSTRUCTION", "100"))  # build quality (ChromaDB: ef_construction=100)
+PG_HNSW_EF_SEARCH = int(os.getenv("PG_HNSW_EF_SEARCH", "100"))  # query quality (ChromaDB: ef_search=100)

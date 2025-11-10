@@ -9,13 +9,15 @@ This is a vector database comparison benchmark for OpenAPI spec search, comparin
 ## Architecture
 
 ### Service Stack
-- **pgvector**: PostgreSQL with vector extension, using IVFFlat indexing for L2 distance queries
-- **ChromaDB**: Vector database with HTTP API
+- **pgvector**: PostgreSQL with vector extension, using **HNSW indexing** for L2 distance queries
+- **ChromaDB**: Vector database with HTTP API (also uses **HNSW indexing** by default)
 - **Ollama**: Local embedding model server (default: all-minilm:l6-v2 model, 384 dimensions)
 - **FastAPI**: REST API exposing ingest and query endpoints
 - **pgAdmin**: Database management interface
 
 All services communicate on a shared Docker network (`benchnet`) and use Docker secrets for password management.
+
+**Index Algorithm Choice:** Both databases use **HNSW (Hierarchical Navigable Small World)** indexing with matched parameters for a **fair scientific comparison**. HNSW is a graph-based algorithm that provides excellent recall and query performance. Using the same index type ensures we're comparing database implementations, not different indexing algorithms.
 
 ### Data Flow
 1. **Ingest**: OpenAPI spec → YAML parsing → text extraction → chunking → Ollama embedding → storage in pg/chroma/both
@@ -33,7 +35,9 @@ All services communicate on a shared Docker network (`benchnet`) and use Docker 
 
 **app/db_pg.py**: PostgreSQL/pgvector interface
 - Creates `documents` table with vector column
-- Uses IVFFlat index with L2 distance operator (`<->`)
+- Uses **HNSW index** with L2 distance operator (`<->`)
+- HNSW parameters: `m=16` (max connections), `ef_construction=100` (build quality)
+- Query-time parameter: `ef_search=100` (search quality)
 - Converts L2 distance to cosine similarity approximation: `1.0 - (d*d)/2.0`
 - All embeddings are L2-normalized before storage
 
@@ -141,7 +145,10 @@ Environment variables are read from `.env` file. Key settings:
 
 - **Embedding**: `EMBEDDING_MODEL` (default: all-minilm:l6-v2), `EMBED_DIM` (default: 384)
 - **Chunking**: `CHUNK_SIZE` (default: 1200), `CHUNK_OVERLAP` (default: 150)
-- **pgvector**: `PG_IVFFLAT_LISTS` (default: 100) - controls IVFFlat index granularity
+- **pgvector HNSW**:
+  - `PG_HNSW_M` (default: 16) - max connections per layer, matched to ChromaDB's `max_neighbors`
+  - `PG_HNSW_EF_CONSTRUCTION` (default: 100) - index build quality, matched to ChromaDB's `ef_construction`
+  - `PG_HNSW_EF_SEARCH` (default: 100) - query search quality, matched to ChromaDB's `ef_search`
 - **Service URLs**: Auto-configured for Docker network, expose ports configured via `*_HOST_IP` and `*_HOST_PORT`
 - **Wait timeouts**: `*_WAIT_MAX_SECONDS` and `*_WAIT_INTERVAL_SECONDS` for each service
 
@@ -163,8 +170,20 @@ Uses sliding window with overlap to avoid splitting semantic units. Default 1200
 The FastAPI app's lifespan handler explicitly waits for all dependencies (ChromaDB, Ollama, PostgreSQL) to be healthy before initializing schemas/collections. This prevents race conditions during `docker compose up`.
 
 ### Schema Initialization
-- **pgvector**: Creates extension, table, and IVFFlat index if they don't exist (idempotent)
+- **pgvector**: Creates extension, table, and HNSW index if they don't exist (idempotent)
 - **ChromaDB**: Uses `get_or_create_collection()` for idempotent initialization
+
+### HNSW Parameter Matching
+
+For a fair comparison, both databases use identical HNSW parameters:
+
+| Parameter | pgvector | ChromaDB | Default Value | Purpose |
+|-----------|----------|----------|---------------|---------|
+| Max connections | `m` | `max_neighbors` | 16 | Graph connectivity |
+| Build quality | `ef_construction` | `ef_construction` | 100 | Index build accuracy |
+| Search quality | `ef_search` | `ef_search` | 100 | Query-time recall |
+
+**Why HNSW?** Both ChromaDB and pgvector support HNSW indexing. Using the same algorithm ensures that performance differences reflect database implementation characteristics (storage engine, query optimization, etc.) rather than different indexing strategies. HNSW provides excellent recall with sub-linear query time complexity, making it ideal for high-dimensional vector search.
 
 ### Error Handling
 - Embedding dimension mismatches raise RuntimeError

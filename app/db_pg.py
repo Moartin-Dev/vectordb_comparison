@@ -1,7 +1,7 @@
 import psycopg
 from psycopg.rows import dict_row
 from typing import List, Dict, Any
-from config import EMBED_DIM, PG_IVFFLAT_LISTS, PG_HOST, PG_PORT, PG_DB, PG_USER, PG_PASSWORD_FILE
+from config import EMBED_DIM, PG_HNSW_M, PG_HNSW_EF_CONSTRUCTION, PG_HNSW_EF_SEARCH, PG_HOST, PG_PORT, PG_DB, PG_USER, PG_PASSWORD_FILE
 from utils import read_secret, vector_literal
 
 def _dsn() -> str:
@@ -25,12 +25,12 @@ def init_pg_schema():
                 DO $$
                 BEGIN
                     IF NOT EXISTS (
-                        SELECT 1 FROM pg_indexes WHERE indexname = 'idx_documents_embedding_ivfflat_l2'
+                        SELECT 1 FROM pg_indexes WHERE indexname = 'idx_documents_embedding_hnsw_l2'
                     ) THEN
-                        CREATE INDEX idx_documents_embedding_ivfflat_l2
+                        CREATE INDEX idx_documents_embedding_hnsw_l2
                         ON documents
-                        USING ivfflat (embedding vector_l2_ops)
-                        WITH (lists = {PG_IVFFLAT_LISTS});
+                        USING hnsw (embedding vector_l2_ops)
+                        WITH (m = {PG_HNSW_M}, ef_construction = {PG_HNSW_EF_CONSTRUCTION});
                     END IF;
                 END$$;
             """)
@@ -48,6 +48,8 @@ def replace_source(source: str, chunks: List[str], embeddings: List[List[float]]
 def query_topk(qvec: List[float], k: int) -> List[Dict[str, Any]]:
     with psycopg.connect(_dsn()) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
+            # Set HNSW search quality parameter for fair comparison with ChromaDB
+            cur.execute(f"SET LOCAL hnsw.ef_search = {PG_HNSW_EF_SEARCH};")
             cur.execute(
                 f"""
                 SELECT id, source, chunk_id, content,
